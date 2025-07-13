@@ -1,0 +1,14 @@
+{
+  "botName": "Kaya-MD",
+  "owner": ["243813627591"],
+  "author": "Kaya",
+  "packname": "Kaya Bot",
+  "prefix": ".",
+  "sessionName": "session",
+  "publicBot": true,
+  "botWelcomeMessage": "👋 Bienvenue dans Kaya-MD ! Tape .menu pour voir les commandes.",
+  "botStatus": "🟢 En ligne - by Kaya",
+  "autoRead": true,
+  "restrict": false,
+  "botImage": ""
+}
