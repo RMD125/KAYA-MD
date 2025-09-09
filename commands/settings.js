@@ -1,7 +1,6 @@
 const checkAdminOrOwner = require('../utils/checkAdmin'); 
 const config = require('../config');
-
-const contextInfo = { forwardingScore: 999, isForwarded: true };
+const { contextInfo } = require('../utils/contextInfo'); // import centralisé
 
 module.exports = {
   name: 'settings',

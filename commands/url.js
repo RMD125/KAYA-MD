@@ -2,16 +2,7 @@ const axios = require('axios');
 const FormData = require('form-data');
 const { downloadContentFromMessage } = require('@whiskeysockets/baileys');
 const { Readable } = require('stream');
-
-const contextInfo = {
-  forwardingScore: 999,
-  isForwarded: true,
-  forwardedNewsletterMessageInfo: {
-    newsletterJid: '120363402565816662@newsletter',
-    newsletterName: 'KAYA MD',
-    serverMessageId: 122
-  }
-};
+const { contextInfo } = require('../utils/contextInfo'); // import centralisé
 
 module.exports = {
   name: 'url',
@@ -28,7 +19,7 @@ module.exports = {
         }, { quoted: m });
       }
 
-      // Téléchargement du média compatible avec ton Baileys
+      // Téléchargement du média
       const stream = await downloadContentFromMessage(quoted, mime.split('/')[0]);
       let buffer = Buffer.from([]);
       for await (const chunk of stream) {

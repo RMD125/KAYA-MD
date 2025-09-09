@@ -1,3 +1,5 @@
+const { contextInfo } = require('../utils/contextInfo'); // import centralisé
+
 module.exports = {
   name: 'repo',
   description: '🔧 Envoie les liens GitHub, YouTube et groupe WhatsApp de support',
@@ -11,7 +13,7 @@ module.exports = {
 ├ 
 📺 Tutoriel Déploiement : https://youtube.com/@KAYATECH243
 ├
- 💬 Groupe WhatsApp : https://chat.whatsapp.com/DoMh6jWjly2ErwVppmCGZo
+💬 Groupe WhatsApp : https://chat.whatsapp.com/DoMh6jWjly2ErwVppmCGZo
 ╰──────────────────────────⬣
 
 N’hésite pas à poser tes questions et à suivre les tutoriels !
@@ -19,16 +21,7 @@ N’hésite pas à poser tes questions et à suivre les tutoriels !
 
     await kaya.sendMessage(m.chat, {
       text: texte,
-      contextInfo: {
-        forwardingScore: 999,
-        isForwarded: true,
-        mentionedJid: [],
-        forwardedNewsletterMessageInfo: {
-          newsletterJid: '120363402565816662@newsletter', // Ton ID chaîne
-          newsletterName: 'KAYA MD',
-          serverMessageId: 143
-        }
-      }
+      contextInfo
     }, { quoted: m });
   }
 };

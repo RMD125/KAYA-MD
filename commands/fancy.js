@@ -1,3 +1,6 @@
+// ================= commands/fancy.js =================
+const { contextInfo } = require('../utils/contextInfo'); // ✅ Import global
+
 function convertStyle(text, type) {
   const styles = {
     1: { a: 0x1D41A, A: 0x1D400 },
@@ -91,15 +94,7 @@ module.exports = {
 📑 *Styles disponibles :*
 
 ${styles}`,
-        contextInfo: {
-          forwardingScore: 999,
-          isForwarded: true,
-          forwardedNewsletterMessageInfo: {
-            newsletterJid: '120363402565816662@newsletter',
-            newsletterName: 'KAYA MD',
-            serverMessageId: 143
-          }
-        }
+        contextInfo // ✅ utilise l’import centralisé
       }, { quoted: m });
     }
 
@@ -107,7 +102,7 @@ ${styles}`,
     const content = args.slice(1).join(" ");
     const fancyText = convertStyle(content, style);
 
-    // Envoi final SANS contextInfo
+    // ✅ Envoi final
     return kaya.sendMessage(m.chat, { text: fancyText }, { quoted: m });
   }
 };

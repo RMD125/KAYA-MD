@@ -1,15 +1,6 @@
 const { downloadContentFromMessage } = require('@whiskeysockets/baileys');
 const { Sticker, StickerTypes } = require('wa-sticker-formatter');
-
-const contextInfo = {
-  forwardingScore: 999,
-  isForwarded: true,
-  forwardedNewsletterMessageInfo: {
-    newsletterJid: '120363402565816662@newsletter',
-    newsletterName: 'KAYA MD',
-    serverMessageId: 122
-  }
-};
+const { contextInfo } = require('../utils/contextInfo'); // import centralisé
 
 // Util: convertir stream -> buffer
 async function streamToBuffer(stream) {

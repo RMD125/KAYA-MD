@@ -1,15 +1,6 @@
 const checkAdminOrOwner = require('../utils/checkAdmin');
 const { saveBotModes } = require('../utils/botModes');
-
-const contextInfo = {
-    forwardingScore: 999,
-    isForwarded: true,
-    forwardedNewsletterMessageInfo: {
-        newsletterJid: '120363402565816662@newsletter',
-        newsletterName: 'KAYA MD',
-        serverMessageId: 145
-    }
-};
+const { contextInfo } = require('../utils/contextInfo'); // ← import global
 
 module.exports = {
     name: 'autoreact',

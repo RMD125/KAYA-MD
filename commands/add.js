@@ -1,15 +1,6 @@
 const checkAdminOrOwner = require('../utils/checkAdmin');
 const decodeJid = require('../utils/decodeJid');
-
-const contextInfo = {
-  forwardingScore: 999,
-  isForwarded: true,
-  forwardedNewsletterMessageInfo: {
-    newsletterJid: '120363402565816662@newsletter',
-    newsletterName: 'KAYA MD',
-    serverMessageId: 150
-  }
-};
+const { contextInfo } = require('../utils/contextInfo'); 
 
 module.exports = {
   name: 'add',

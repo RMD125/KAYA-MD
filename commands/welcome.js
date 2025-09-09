@@ -3,6 +3,7 @@ const path = require('path');
 const config = require('../config');
 const checkAdminOrOwner = require('../utils/checkAdmin');
 const decodeJid = require('../utils/decodeJid');
+const { contextInfo } = require('../utils/contextInfo'); // centralisation
 
 const welcomeFile = path.join(__dirname, '../data/welcome.json');
 let welcomeData = {};
@@ -19,16 +20,6 @@ function saveWelcomeData() {
   fs.writeFileSync(welcomeFile, JSON.stringify(welcomeData, null, 2));
 }
 
-const contextInfo = {
-  forwardingScore: 999,
-  isForwarded: true,
-  forwardedNewsletterMessageInfo: {
-    newsletterJid: '120363402565816662@newsletter',
-    newsletterName: 'KAYA MD',
-    serverMessageId: 143
-  }
-};
-
 module.exports = {
   name: 'welcome',
   description: 'Active ou désactive le message de bienvenue dans les groupes',
@@ -36,7 +27,7 @@ module.exports = {
   run: async (kaya, m, msg, store, args, { isGroup }) => {
     try {
       if (!isGroup)
-        return kaya.sendMessage(m.chat, { text: '❌ Cette commande fonctionne uniquement dans un groupe.' }, { quoted: msg });
+        return kaya.sendMessage(m.chat, { text: '❌ Cette commande fonctionne uniquement dans un groupe.', contextInfo }, { quoted: msg });
 
       const chatId = decodeJid(m.chat);
       const sender = decodeJid(m.sender);
@@ -64,7 +55,8 @@ module.exports = {
         saveWelcomeData();
         return kaya.sendMessage(chatId, { 
           image: { url: groupPP }, 
-          caption: '✅ *WELCOME ACTIVÉ* pour ce groupe !'
+          caption: '✅ *WELCOME ACTIVÉ* pour ce groupe !',
+          contextInfo
         }, { quoted: msg });
       }
 
@@ -73,28 +65,31 @@ module.exports = {
         saveWelcomeData();
         return kaya.sendMessage(chatId, { 
           image: { url: groupPP }, 
-          caption: '❌ *WELCOME DÉSACTIVÉ* pour ce groupe.'
+          caption: '❌ *WELCOME DÉSACTIVÉ* pour ce groupe.',
+          contextInfo
         }, { quoted: msg });
       }
 
       // Activation/Désactivation globale (owner uniquement)
       if (subCmd === 'all') {
         if (!permissions.isOwner)
-          return kaya.sendMessage(chatId, { text: '❌ Seul le propriétaire peut activer/désactiver pour tous les groupes.' }, { quoted: msg });
+          return kaya.sendMessage(chatId, { text: '❌ Seul le propriétaire peut activer/désactiver pour tous les groupes.', contextInfo }, { quoted: msg });
 
         if (args[1]?.toLowerCase() === 'off') {
           delete welcomeData.global;
           saveWelcomeData();
           return kaya.sendMessage(chatId, { 
             image: { url: groupPP }, 
-            caption: '❌ *WELCOME DÉSACTIVÉ* pour tous les groupes 🌍'
+            caption: '❌ *WELCOME DÉSACTIVÉ* pour tous les groupes 🌍',
+            contextInfo
           }, { quoted: msg });
         } else {
           welcomeData.global = true;
           saveWelcomeData();
           return kaya.sendMessage(chatId, { 
             image: { url: groupPP }, 
-            caption: '✅ *WELCOME ACTIVÉ* pour tous les groupes 🌍'
+            caption: '✅ *WELCOME ACTIVÉ* pour tous les groupes 🌍',
+            contextInfo
           }, { quoted: msg });
         }
       }
@@ -106,7 +101,7 @@ module.exports = {
 
     } catch (err) {
       console.error('❌ Erreur welcome run :', err);
-      return kaya.sendMessage(m.chat, { text: `❌ Erreur welcome : ${err.message}` }, { quoted: msg });
+      return kaya.sendMessage(m.chat, { text: `❌ Erreur welcome : ${err.message}`, contextInfo }, { quoted: msg });
     }
   },
 

@@ -2,6 +2,8 @@ const moment = require('moment');
 require('moment/locale/fr');
 moment.locale('fr');
 
+const { contextInfo } = require('../utils/contextInfo'); // import centralisé
+
 module.exports = {
   name: 'calendrier',
   description: '📆 Affiche le calendrier avec la date du jour encadrée',
@@ -13,22 +15,14 @@ module.exports = {
 
     if (args.length >= 2) {
       year = parseInt(args[0]);
-      month = parseInt(args[1]) - 1; // Convert from 1-indexed to 0-indexed
+      month = parseInt(args[1]) - 1;
       highlightToday = false;
     }
 
     if (isNaN(year) || isNaN(month) || month < 0 || month > 11) {
       return kaya.sendMessage(m.chat, {
         text: '❌ Format invalide. Utilise : `.calendrier [année] [mois]`\nExemple : `.calendrier 2025 7`',
-        contextInfo: {
-          forwardingScore: 999,
-          isForwarded: true,
-          forwardedNewsletterMessageInfo: {
-            newsletterJid: '120363402565816662@newsletter',
-            newsletterName: 'KAYA MD',
-            serverMessageId: 143
-          }
-        }
+        contextInfo
       }, { quoted: m });
     }
 
@@ -43,9 +37,7 @@ module.exports = {
     let line = '';
     let dayOfWeek = start.isoWeekday();
 
-    for (let i = 1; i < dayOfWeek; i++) {
-      line += '    ';
-    }
+    for (let i = 1; i < dayOfWeek; i++) line += '    ';
 
     for (let day = 1; day <= daysInMonth; day++) {
       const isToday =
@@ -56,7 +48,6 @@ module.exports = {
 
       let dayStr = (day < 10 ? ` ${day}` : `${day}`);
       dayStr = isToday ? `[${dayStr}]` : ` ${dayStr} `;
-
       line += dayStr;
 
       if ((dayOfWeek % 7) === 0) {
@@ -70,17 +61,6 @@ module.exports = {
 
     if (line.trim() !== '') calendar += line + '\n';
 
-    await kaya.sendMessage(m.chat, {
-      text: calendar.trim(),
-      contextInfo: {
-        forwardingScore: 999,
-        isForwarded: true,
-        forwardedNewsletterMessageInfo: {
-          newsletterJid: '120363402565816662@newsletter',
-          newsletterName: 'KAYA MD',
-          serverMessageId: 143
-        }
-      }
-    }, { quoted: m });
+    await kaya.sendMessage(m.chat, { text: calendar.trim(), contextInfo }, { quoted: m });
   }
 };

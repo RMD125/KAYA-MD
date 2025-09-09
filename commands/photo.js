@@ -2,17 +2,8 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const { downloadContentFromMessage } = require('@whiskeysockets/baileys');
-const sharp = require('sharp'); // pour convertir WebP -> PNG
-
-const contextInfo = {
-  forwardingScore: 999,
-  isForwarded: true,
-  forwardedNewsletterMessageInfo: {
-    newsletterJid: '120363402565816662@newsletter',
-    newsletterName: 'KAYA MD',
-    serverMessageId: 122
-  }
-};
+const sharp = require('sharp');
+const { contextInfo } = require('../utils/contextInfo'); // <-- import centralisé
 
 async function streamToBuffer(stream) {
   const chunks = [];
@@ -38,7 +29,6 @@ module.exports = {
         return kaya.sendMessage(m.chat, { text: '❌ Ce message n’est pas un sticker.', contextInfo }, { quoted: m });
       }
 
-      // Télécharge le sticker
       const stream = await downloadContentFromMessage(targetMsg[type], 'sticker');
       const buffer = await streamToBuffer(stream);
 
@@ -46,13 +36,9 @@ module.exports = {
         return kaya.sendMessage(m.chat, { text: '❌ Impossible de lire ce sticker.', contextInfo }, { quoted: m });
       }
 
-      // Conversion WebP -> PNG
       const outputPath = path.join(os.tmpdir(), `sticker_${Date.now()}.png`);
-      await sharp(buffer)
-        .png()
-        .toFile(outputPath);
+      await sharp(buffer).png().toFile(outputPath);
 
-      // Envoie de l'image
       await kaya.sendMessage(m.chat, {
         image: fs.readFileSync(outputPath),
         caption: '✅ Sticker converti en image PNG',

@@ -1,4 +1,6 @@
+// ================= commands/instagram.js =================
 const axios = require('axios');
+const { contextInfo } = require('../utils/contextInfo'); // ✅ Import centralisé
 
 module.exports = {
   name: 'instagram',
@@ -13,15 +15,7 @@ module.exports = {
 ┃ ❌ Aucun lien Instagram détecté !
 ┃ 📌 Utilisation : *.instagram https://www.instagram.com/p/xxx*
 ╰━━━━━━━━━━━━━━━━━━━━━━━━⬣`,
-        contextInfo: {
-          forwardingScore: 999,
-          isForwarded: true,
-          forwardedNewsletterMessageInfo: {
-            newsletterJid: '120363402565816662@newsletter',
-            newsletterName: 'KAYA MD',
-            serverMessageId: 143
-          }
-        }
+        contextInfo
       }, { quoted: m });
     }
 
@@ -43,7 +37,7 @@ module.exports = {
             }))
           };
         }
-      } catch (err) {
+      } catch {
         console.log("❌ FGMods API failed, trying NexOracle...");
       }
 
@@ -66,7 +60,8 @@ module.exports = {
 
       if (!result || !result.medias || result.medias.length === 0) {
         return kaya.sendMessage(m.chat, {
-          text: `❌ Impossible de récupérer le post Instagram.\n🔁 Vérifie le lien ou réessaie plus tard.`
+          text: `❌ Impossible de récupérer le post Instagram.\n🔁 Vérifie le lien ou réessaie plus tard.`,
+          contextInfo
         }, { quoted: m });
       }
 
@@ -86,15 +81,7 @@ module.exports = {
 📝 *Description* : ${result.caption}
    *By* : KAYA-MD
 ╰━━━━━━━━━━━━━━━━━━━━━━⬣`,
-            contextInfo: {
-              forwardingScore: 999,
-              isForwarded: true,
-              forwardedNewsletterMessageInfo: {
-                newsletterJid: '120363402565816662@newsletter',
-                newsletterName: 'KAYA MD',
-                serverMessageId: 143
-              }
-            }
+            contextInfo
           }, { quoted: m });
         } else {
           await kaya.sendMessage(m.chat, {
@@ -105,15 +92,7 @@ module.exports = {
 📝 *Description* : ${result.caption}
    *By* : KAYA-MD
 ╰━━━━━━━━━━━━━━━━━━━━━━⬣`,
-            contextInfo: {
-              forwardingScore: 999,
-              isForwarded: true,
-              forwardedNewsletterMessageInfo: {
-                newsletterJid: '120363402565816662@newsletter',
-                newsletterName: 'KAYA MD',
-                serverMessageId: 143
-              }
-            }
+            contextInfo
           }, { quoted: m });
         }
       }
@@ -121,7 +100,8 @@ module.exports = {
     } catch (e) {
       console.error('Erreur Instagram :', e);
       await kaya.sendMessage(m.chat, {
-        text: `❌ Une erreur est survenue : ${e.message || "Inconnue"}`
+        text: `❌ Une erreur est survenue : ${e.message || "Inconnue"}`,
+        contextInfo
       }, { quoted: m });
     }
   }

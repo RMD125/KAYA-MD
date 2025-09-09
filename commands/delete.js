@@ -1,15 +1,6 @@
 // ================= commands/delete.js =================
 const checkAdminOrOwner = require('../utils/checkAdmin');
-
-const contextInfo = {
-  forwardingScore: 999,
-  isForwarded: true,
-  forwardedNewsletterMessageInfo: {
-    newsletterJid: '120363402565816662@newsletter',
-    newsletterName: 'KAYA MD',
-    serverMessageId: 160
-  }
-};
+const { contextInfo } = require('../utils/contextInfo'); // ✅ Import centralisé
 
 module.exports = {
   name: 'delete',

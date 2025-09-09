@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const checkAdminOrOwner = require("../utils/checkAdmin");
+const { contextInfo } = require("../utils/contextInfo"); // ← import contextInfo global
 
 const antiDemoteFile = path.join(__dirname, "../data/antidemote.json");
 
@@ -16,16 +17,6 @@ try {
 function saveAntiDemote() {
   fs.writeFileSync(antiDemoteFile, JSON.stringify(antiDemoteData, null, 2));
 }
-
-const contextInfo = {
-  forwardingScore: 999,
-  isForwarded: true,
-  forwardedNewsletterMessageInfo: {
-    newsletterJid: "120363402565816662@newsletter",
-    newsletterName: "KAYA MD",
-    serverMessageId: 155
-  }
-};
 
 // Set pour éviter les boucles
 const processing = new Set();
@@ -103,7 +94,6 @@ module.exports = {
         } catch (e) {
           console.error("Erreur antiDemote participantUpdate:", e);
         } finally {
-          // Supprime le marqueur après 2s pour éviter boucle infinie
           setTimeout(() => processing.delete(user), 2000);
         }
       }

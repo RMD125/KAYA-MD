@@ -1,16 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const checkAdminOrOwner = require("../utils/checkAdmin");
-
-const contextInfo = {
-  forwardingScore: 999,
-  isForwarded: true,
-  forwardedNewsletterMessageInfo: {
-    newsletterJid: "120363402565816662@newsletter",
-    newsletterName: "KAYA MD",
-    serverMessageId: 143
-  }
-};
+const { contextInfo } = require("../utils/contextInfo"); // centralisation
 
 const banFile = path.join(__dirname, "../data/ban.json");
 
@@ -67,7 +58,11 @@ module.exports = {
       if (!bannedUsers.includes(target)) {
         return kaya.sendMessage(
           m.chat,
-          { text: `❌ L'utilisateur *@${target}* n'est pas banni.`, mentions: [target + '@s.whatsapp.net'], contextInfo },
+          { 
+            text: `❌ L'utilisateur *@${target}* n'est pas banni.`, 
+            mentions: [target + '@s.whatsapp.net'], 
+            contextInfo 
+          },
           { quoted: m }
         );
       }
@@ -78,7 +73,11 @@ module.exports = {
 
       return kaya.sendMessage(
         m.chat,
-        { text: `✅ Utilisateur *@${target}* débanni avec succès !`, mentions: [target + '@s.whatsapp.net'], contextInfo },
+        { 
+          text: `✅ Utilisateur *@${target}* débanni avec succès !`, 
+          mentions: [target + '@s.whatsapp.net'], 
+          contextInfo 
+        },
         { quoted: m }
       );
 

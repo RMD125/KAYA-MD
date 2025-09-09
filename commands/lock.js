@@ -1,13 +1,6 @@
-const contextInfo = {
-  forwardingScore: 999,
-  isForwarded: true,
-  forwardedNewsletterMessageInfo: {
-    newsletterJid: '120363402565816662@newsletter',
-    newsletterName: 'KAYA MD',
-    serverMessageId: 143
-  }
-};
+// ================= commands/lock.js =================
 const checkAdminOrOwner = require('../utils/checkAdmin');
+const { contextInfo } = require('../utils/contextInfo'); // import centralisé
 
 module.exports = {
   name: 'lock',

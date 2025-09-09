@@ -1,8 +1,11 @@
+// ================= commands/info.js =================
+const { contextInfo } = require('../utils/contextInfo'); // ✅ Import du contextInfo centralisé
+
 module.exports = {
   name: 'info',
   description: 'Affiche les informations du développeur du bot Kaya-MD',
-  run: async (kaya, m) => {
 
+  run: async (kaya, m) => {
     const ownerText = `
 ╭━━〔 👑 𝙋𝙍𝙊𝙋𝙍𝙄É𝙏𝘼𝙄𝙍𝙀 〕━━⬣
 ┃ 🤖 *Bot* : KAYA MD
@@ -16,7 +19,7 @@ module.exports = {
 ┃ wa.me/243993621718
 ┃
 ┃ 📺 *Chaîne YouTube* :
-┃https://youtube.com/@KAYATECH243
+┃ https://youtube.com/@KAYATECH243
 ┃
 ┃ 🧑‍💻 *GitHub* :
 ┃ https://github.com/Kaya2005/KAYA-MD
@@ -26,17 +29,10 @@ module.exports = {
 ╰━━━━━━━━━━━━━━━━━━━━⬣
     `.trim();
 
-    await kaya.sendMessage(m.chat, {
-      text: ownerText,
-      contextInfo: {
-        forwardingScore: 999,
-        isForwarded: true,
-        forwardedNewsletterMessageInfo: {
-          newsletterJid: '120363402565816662@newsletter', // remplace par ton propre ID de chaîne
-          newsletterName: 'KAYA MD',
-          serverMessageId: 143
-        }
-      }
-    }, { quoted: m });
+    await kaya.sendMessage(
+      m.chat,
+      { text: ownerText, contextInfo }, // ✅ contextInfo unique
+      { quoted: m }
+    );
   }
 };

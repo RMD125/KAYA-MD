@@ -1,15 +1,6 @@
 const { downloadContentFromMessage } = require('@whiskeysockets/baileys');
 const { Sticker, StickerTypes } = require('wa-sticker-formatter');
-
-const contextInfo = {
-  forwardingScore: 999,
-  isForwarded: true,
-  forwardedNewsletterMessageInfo: {
-    newsletterJid: '120363402565816662@newsletter',
-    newsletterName: 'KAYA MD',
-    serverMessageId: 122
-  }
-};
+const { contextInfo } = require('../utils/contextInfo'); // import centralisé
 
 // Util: stream -> buffer
 async function streamToBuffer(stream) {
@@ -78,7 +69,7 @@ module.exports = {
       // 5) Crée le sticker (sans packname, juste author)
       const pseudo = m.pushName || 'User';
       const sticker = new Sticker(buffer, {
-        author: `${pseudo} by KAYA-MD`,   // uniquement l’author
+        author: `${pseudo} by KAYA-MD`, // uniquement l’author
         type: StickerTypes.FULL,
         quality: 80
       });

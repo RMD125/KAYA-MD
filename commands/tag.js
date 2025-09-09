@@ -1,14 +1,5 @@
 const checkAdminOrOwner = require('../utils/checkAdmin');
-
-const contextInfo = {
-  forwardingScore: 999,
-  isForwarded: true,
-  forwardedNewsletterMessageInfo: {
-    newsletterJid: '120363402565816662@newsletter',
-    newsletterName: 'KAYA MD',
-    serverMessageId: 143
-  }
-};
+const { contextInfo } = require('../utils/contextInfo'); // import centralisé
 
 module.exports = {
   name: 'tag',
@@ -46,11 +37,12 @@ module.exports = {
       const members = metadata.participants.map(p => p.id);
       const message = m.quoted?.text || args.join(' ') || '_Aucun message fourni._';
 
-      // ✅ Message principal de tag envoyé SANS contextInfo
+      // ✅ Message principal de tag envoyé AVEC contextInfo
       await kaya.sendMessage(m.chat, {
         text: message,
-        mentions: members
-      });
+        mentions: members,
+        contextInfo
+      }, { quoted: m });
 
     } catch (err) {
       console.error('Erreur commande tag :', err);

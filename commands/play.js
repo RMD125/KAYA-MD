@@ -1,8 +1,9 @@
 const axios = require('axios');
 const yts = require('yt-search');
+const { contextInfo } = require('../utils/contextInfo'); // <-- import centralisé
 
 const axiosInstance = axios.create({
-    timeout: 60000, // 60 secondes
+    timeout: 60000,
     maxRedirects: 5,
     headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
@@ -11,16 +12,6 @@ const axiosInstance = axios.create({
 
 const KAIZ_API_KEY = 'cf2ca612-296f-45ba-abbc-473f18f991eb';
 const KAIZ_API_URL = 'https://kaiz-apis.gleeze.com/api/ytdown-mp3';
-
-const contextInfo = {
-    forwardingScore: 999,
-    isForwarded: true,
-    forwardedNewsletterMessageInfo: {
-        newsletterJid: '120363402565816662@newsletter',
-        newsletterName: 'KAYA MD',
-        serverMessageId: 122
-    }
-};
 
 async function fetchVideoInfo(text) {
     const isYtUrl = /(youtube\.com|youtu\.be)/i.test(text);
@@ -62,18 +53,10 @@ module.exports = {
 
         try {
             const { url: videoUrl, info: videoInfo } = await fetchVideoInfo(text);
-
             const audioData = await fetchAudioData(videoUrl);
             if (!audioData.download_url) throw new Error('URL audio vide renvoyée par l’API');
 
-            // Téléchargement du fichier audio
-            let audioRes;
-            try {
-                audioRes = await axiosInstance.get(audioData.download_url, { responseType: 'arraybuffer' });
-            } catch (e) {
-                throw new Error('Erreur lors du téléchargement de l’audio depuis l’API');
-            }
-
+            const audioRes = await axiosInstance.get(audioData.download_url, { responseType: 'arraybuffer' });
             if (!audioRes.data) throw new Error('Audio introuvable ou vide');
 
             const audioBuffer = Buffer.from(audioRes.data, 'binary');

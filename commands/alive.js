@@ -1,3 +1,5 @@
+const { contextInfo } = require('../utils/contextInfo'); // ← import global contextInfo
+
 module.exports = {
   name: 'alive',
   description: 'Montre que le bot est en ligne',
@@ -18,16 +20,7 @@ module.exports = {
       m.chat,
       {
         text: message,
-        contextInfo: {
-          mentionedJid: [m.sender],
-          forwardingScore: 999,
-          isForwarded: true,
-          forwardedNewsletterMessageInfo: {
-            newsletterJid: '120363402565816662@newsletter',
-            newsletterName: 'KAYA MD',
-            serverMessageId: 143
-          }
-        }
+        contextInfo // ← utilisation du contextInfo global
       },
       { quoted: m }
     );

@@ -1,3 +1,5 @@
+const { contextInfo } = require('../utils/contextInfo'); // <-- import centralisé
+
 module.exports = {
   name: 'ping',
   description: 'Vérifie la latence et le statut du bot',
@@ -22,20 +24,14 @@ module.exports = {
 ⚡ Performance : *Ultra rapide* ⚡
     `.trim();
 
-    // Message final avec ID de ta chaîne
+    // Message final avec contextInfo centralisé
     await kaya.sendMessage(
       m.chat,
       {
         text: formattedResponse,
         contextInfo: {
-          mentionedJid: [m.sender],
-          forwardingScore: 999,
-          isForwarded: true,
-          forwardedNewsletterMessageInfo: {
-            newsletterJid: '120363402565816662@newsletter', // Ton ID
-            newsletterName: "KAYA MD",
-            serverMessageId: 143
-          }
+          ...contextInfo,
+          mentionedJid: [m.sender]
         }
       },
       { quoted: m }

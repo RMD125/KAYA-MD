@@ -1,16 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const checkAdminOrOwner = require("../utils/checkAdmin");
-
-const contextInfo = {
-    forwardingScore: 999,
-    isForwarded: true,
-    forwardedNewsletterMessageInfo: {
-        newsletterJid: "120363402565816662@newsletter",
-        newsletterName: "KAYA MD",
-        serverMessageId: 161
-    }
-};
+const { contextInfo } = require("../utils/contextInfo"); // ← import contextInfo global
 
 const antibotFile = path.join(__dirname, "../data/antibotGroups.json");
 
@@ -98,7 +89,6 @@ module.exports = {
 
         // 🔥 Antibot logique :
         // Si ce n'est PAS un humain normal (réponse automatique) → on supprime
-        // On considère qu'un "bot" envoie un message avec un texte long ou formaté
         if (body && body.length > 10) { 
             try {
                 await kaya.sendMessage(chatId, { delete: m.key });

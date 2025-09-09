@@ -1,16 +1,7 @@
 // ================= commands/antilink.js =================
 const fs = require("fs");
 const path = require("path");
-
-const contextInfo = {
-  forwardingScore: 999,
-  isForwarded: true,
-  forwardedNewsletterMessageInfo: {
-    newsletterJid: "120363402565816662@newsletter",
-    newsletterName: "KAYA MD",
-    serverMessageId: 143,
-  },
-};
+const { contextInfo } = require("../utils/contextInfo"); // ← import contextInfo global
 
 // 📂 Fichier de sauvegarde
 const antiLinkFile = path.join(__dirname, "../data/antiLinkGroups.json");
@@ -31,10 +22,7 @@ module.exports = {
       if (!m.isGroup) {
         return kaya.sendMessage(
           m.chat,
-          {
-            text: "❌ Cette commande fonctionne uniquement dans un groupe.",
-            contextInfo,
-          },
+          { text: "❌ Cette commande fonctionne uniquement dans un groupe.", contextInfo },
           { quoted: m }
         );
       }
@@ -43,10 +31,7 @@ module.exports = {
       if (!isAdminOrOwner) {
         return kaya.sendMessage(
           m.chat,
-          {
-            text: "🚫 Seuls les *Admins* ou le *Propriétaire* peuvent activer/désactiver l’anti-link.",
-            contextInfo,
-          },
+          { text: "🚫 Seuls les *Admins* ou le *Propriétaire* peuvent activer/désactiver l’anti-link.", contextInfo },
           { quoted: m }
         );
       }
@@ -73,11 +58,7 @@ module.exports = {
 
       await kaya.sendMessage(
         m.chat,
-        {
-          text: `✅ *Anti-link ${action === "on" ? "activé" : "désactivé"}* pour ce groupe.`,
-          mentions: [m.sender],
-          contextInfo,
-        },
+        { text: `✅ *Anti-link ${action === "on" ? "activé" : "désactivé"}* pour ce groupe.`, mentions: [m.sender], contextInfo },
         { quoted: m }
       );
     } catch (err) {

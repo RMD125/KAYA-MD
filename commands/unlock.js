@@ -1,14 +1,5 @@
 const checkAdminOrOwner = require('../utils/checkAdmin');
-
-const contextInfo = {
-  forwardingScore: 999,
-  isForwarded: true,
-  forwardedNewsletterMessageInfo: {
-    newsletterJid: '120363402565816662@newsletter',
-    newsletterName: 'KAYA MD',
-    serverMessageId: 143
-  }
-};
+const { contextInfo } = require('../utils/contextInfo'); // import centralisé
 
 module.exports = {
   name: 'unlock',

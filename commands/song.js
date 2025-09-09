@@ -1,5 +1,6 @@
 const axios = require('axios');
 const yts = require('yt-search');
+const { contextInfo } = require('../utils/contextInfo'); // import centralisé
 
 const axiosInstance = axios.create({
     timeout: 60000, // 60 secondes
@@ -11,16 +12,6 @@ const axiosInstance = axios.create({
 
 const KAIZ_API_KEY = 'cf2ca612-296f-45ba-abbc-473f18f991eb';
 const KAIZ_API_URL = 'https://kaiz-apis.gleeze.com/api/ytdown-mp3';
-
-const contextInfo = {
-    forwardingScore: 999,
-    isForwarded: true,
-    forwardedNewsletterMessageInfo: {
-        newsletterJid: '120363402565816662@newsletter',
-        newsletterName: 'KAYA MD',
-        serverMessageId: 122
-    }
-};
 
 async function fetchVideoInfo(text) {
     const isYtUrl = /(youtube\.com|youtu\.be)/i.test(text);
@@ -91,7 +82,8 @@ module.exports = {
                 mimetype: 'audio/mpeg',
                 fileName: `${audioData.title || videoInfo.title || 'audio'}.mp3`,
                 ptt: false,
-                caption
+                caption,
+                contextInfo
             }, { quoted: m });
 
         } catch (err) {

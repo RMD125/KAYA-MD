@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const checkAdminOrOwner = require('../utils/checkAdmin');
 const decodeJid = require('../utils/decodeJid');
+const { contextInfo } = require('../utils/contextInfo'); // ✅ Import global
 
 const byeFile = path.join(__dirname, '../data/bye.json');
 let byeData = {};
@@ -18,40 +19,38 @@ function saveByeData() {
   fs.writeFileSync(byeFile, JSON.stringify(byeData, null, 2));
 }
 
-const contextInfo = {
-  forwardingScore: 999,
-  isForwarded: true,
-  forwardedNewsletterMessageInfo: {
-    newsletterJid: '120363402565816662@newsletter',
-    newsletterName: 'KAYA MD',
-    serverMessageId: 143
-  }
-};
-
 module.exports = {
   name: 'bye',
   description: 'Active ou désactive le message d’au revoir dans les groupes',
 
   run: async (kaya, m, msg, store, args) => {
     try {
-      if (!m.isGroup)
-        return kaya.sendMessage(m.chat, { text: '❌ Cette commande fonctionne uniquement dans un groupe.' }, { quoted: msg });
+      if (!m.isGroup) {
+        return kaya.sendMessage(
+          m.chat,
+          { text: '❌ Cette commande fonctionne uniquement dans un groupe.', contextInfo },
+          { quoted: msg }
+        );
+      }
 
       const chatId = decodeJid(m.chat);
       const sender = decodeJid(m.sender);
 
       const permissions = await checkAdminOrOwner(kaya, chatId, sender);
-      permissions.isAdminOrOwner = permissions.isAdmin || permissions.isOwner;
-
-      if (!permissions.isAdminOrOwner)
-        return kaya.sendMessage(chatId, { text: '❌ Seuls les admins ou le propriétaire peuvent utiliser cette commande.' }, { quoted: msg });
+      if (!permissions.isAdmin && !permissions.isOwner) {
+        return kaya.sendMessage(
+          chatId,
+          { text: '❌ Seuls les admins ou le propriétaire peuvent utiliser cette commande.', contextInfo },
+          { quoted: msg }
+        );
+      }
 
       let subCmd = args[0]?.toLowerCase() || '';
       if (!subCmd && m.body.toLowerCase().startsWith('.bye')) {
         subCmd = m.body.toLowerCase().replace('.bye', '').trim();
       }
 
-      // Récupère la photo du groupe
+      // Photo du groupe
       const groupPP = await kaya.profilePictureUrl(chatId, 'image').catch(() => 'https://i.imgur.com/3XjWdoI.png');
 
       if (subCmd === 'on' || subCmd === '1') {
@@ -59,7 +58,8 @@ module.exports = {
         saveByeData();
         return kaya.sendMessage(chatId, { 
           image: { url: groupPP }, 
-          caption: '✅ *BYE ACTIVÉ* pour ce groupe !'
+          caption: '✅ *BYE ACTIVÉ* pour ce groupe !',
+          contextInfo
         }, { quoted: m });
       }
 
@@ -68,7 +68,8 @@ module.exports = {
         saveByeData();
         return kaya.sendMessage(chatId, { 
           image: { url: groupPP }, 
-          caption: '❌ *BYE DÉSACTIVÉ* pour ce groupe.'
+          caption: '❌ *BYE DÉSACTIVÉ* pour ce groupe.',
+          contextInfo
         }, { quoted: m });
       }
 
@@ -79,12 +80,16 @@ module.exports = {
 
     } catch (err) {
       console.error('❌ Erreur bye run :', err);
-      return kaya.sendMessage(m.chat, { text: `❌ Erreur bye : ${err.message}` }, { quoted: m });
+      return kaya.sendMessage(
+        m.chat,
+        { text: `❌ Erreur bye : ${err.message}`, contextInfo },
+        { quoted: m }
+      );
     }
   },
 
   participantUpdate: async (kaya, update) => {
-    const chatId = decodeJid(update.id); // <-- Correction ici
+    const chatId = decodeJid(update.id);
     const { participants, action } = update;
 
     if (action !== 'remove' || (!byeData.global && !byeData[chatId])) return;
