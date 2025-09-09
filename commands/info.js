@@ -22,7 +22,7 @@ module.exports = {
 ┃ https://youtube.com/@KAYATECH243
 ┃
 ┃ 🧑‍💻 *GitHub* :
-┃ https://github.com/Kaya2005/KAYA-MD
+┃ https://github.com/kaya-md/KAYA-MD
 ┃
 ┃ ✈️ *Canal Telegram* :
 ┃ https://t.me/techword1
