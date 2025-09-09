@@ -11,8 +11,8 @@ const contextInfo = {
 };
 
 module.exports = {
-  name: 'promote',
-  description: '👑 Promouvoir un membre du groupe en admin',
+  name: 'revoke',
+  description: '❌ Rétrograder un admin du groupe',
   category: 'Groupe',
   group: true,
   admin: true,
@@ -56,22 +56,22 @@ module.exports = {
     }
 
     try {
-      await kaya.groupParticipantsUpdate(m.chat, [target], 'promote');
+      await kaya.groupParticipantsUpdate(m.chat, [target], 'demote');
 
       await kaya.sendMessage(
         m.chat,
         {
-          text: `✅ @${target.split('@')[0]} est maintenant admin !`,
+          text: `✅ @${target.split('@')[0]} n'est plus admin !`,
           mentions: [target],
           contextInfo
         },
         { quoted: m }
       );
     } catch (err) {
-      console.error('Erreur promote:', err);
+      console.error('Erreur revoke:', err);
       return kaya.sendMessage(
         m.chat,
-        { text: `❌ Impossible de promouvoir ce membre.\nDétails : ${err.message}`, contextInfo },
+        { text: `❌ Impossible de rétrograder ce membre.\nDétails : ${err.message}`, contextInfo },
         { quoted: m }
       );
     }

@@ -1,5 +1,17 @@
 const axios = require('axios');
 const FormData = require('form-data');
+const { downloadContentFromMessage } = require('@whiskeysockets/baileys');
+const { Readable } = require('stream');
+
+const contextInfo = {
+  forwardingScore: 999,
+  isForwarded: true,
+  forwardedNewsletterMessageInfo: {
+    newsletterJid: '120363402565816662@newsletter',
+    newsletterName: 'KAYA MD',
+    serverMessageId: 122
+  }
+};
 
 module.exports = {
   name: 'url',
@@ -11,14 +23,21 @@ module.exports = {
 
       if (!/image\/(jpe?g|png)/.test(mime)) {
         return kaya.sendMessage(m.chat, {
-          text: '📸 *Veuillez répondre à une image pour générer un lien.*'
+          text: '📸 *Veuillez répondre à une image pour générer un lien.*',
+          contextInfo
         }, { quoted: m });
       }
 
-      const buffer = await quoted.download();
+      // Téléchargement du média compatible avec ton Baileys
+      const stream = await downloadContentFromMessage(quoted, mime.split('/')[0]);
+      let buffer = Buffer.from([]);
+      for await (const chunk of stream) {
+        buffer = Buffer.concat([buffer, chunk]);
+      }
+
       const form = new FormData();
       form.append('reqtype', 'fileupload');
-      form.append('fileToUpload', buffer, 'image.jpg');
+      form.append('fileToUpload', Readable.from(buffer), 'image.jpg');
 
       const response = await axios.post('https://catbox.moe/user/api.php', form, {
         headers: form.getHeaders()
@@ -33,12 +52,16 @@ module.exports = {
 │ ${url}
 ╰──────────────────⬣`.trim();
 
-      await kaya.sendMessage(m.chat, { text: message }, { quoted: m });
+      await kaya.sendMessage(m.chat, {
+        text: message,
+        contextInfo
+      }, { quoted: m });
 
     } catch (err) {
-      console.error('Erreur URL Catbox :', err);
+      console.error('Erreur URL Catbox :', err.response?.data || err.message || err);
       await kaya.sendMessage(m.chat, {
-        text: '❌ Une erreur est survenue lors de la génération du lien.'
+        text: '❌ Une erreur est survenue lors de la génération du lien.',
+        contextInfo
       }, { quoted: m });
     }
   }

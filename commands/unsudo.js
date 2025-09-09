@@ -1,47 +1,90 @@
-const config = require('../system/config');
+const config = require('../config');
+const checkAdminOrOwner = require('../utils/checkAdmin');
+
+const contextInfo = {
+  forwardingScore: 999,
+  isForwarded: true,
+  forwardedNewsletterMessageInfo: {
+    newsletterJid: '120363402565816662@newsletter',
+    newsletterName: 'KAYA MD',
+    serverMessageId: 122
+  }
+};
 
 module.exports = {
   name: 'unsudo',
   description: '➖ Retire un owner existant (réservé au propriétaire principal)',
-  category: 'owner',
+  category: 'Owner',
 
   run: async (kaya, m, msg, store, args) => {
-    const senderId = m.sender.split('@')[0];
-    const isOwner = config.owner.includes(senderId);
+    try {
+      const senderId = m.sender.split('@')[0].replace(/\D/g, '');
+      const owners = config.OWNER_NUMBER
+        .split(',')
+        .map(o => o.split('@')[0].replace(/\D/g, '').trim());
 
-    if (!isOwner) {
-      return m.reply('🚫 *Seul le propriétaire principal peut retirer un owner.*');
-    }
+      // ✅ Vérifie que seul le propriétaire principal peut retirer un owner
+      if (senderId !== owners[0]) {
+        return kaya.sendMessage(
+          m.chat,
+          { text: '🚫 Seul le propriétaire principal peut retirer un owner.', contextInfo },
+          { quoted: m }
+        );
+      }
 
-    let targetId;
-    if (m.quoted) {
-      targetId = m.quoted.sender.split('@')[0];
-    } else if (args[0]) {
-      targetId = args[0].replace(/[^0-9]/g, '');
-    } else {
-      return m.reply('❌ *Réponds à un message ou indique un numéro à retirer.*');
-    }
+      // ✅ Récupération du numéro cible
+      const targetId = m.quoted?.sender?.split('@')[0].replace(/\D/g, '') || (args[0] && args[0].replace(/\D/g, ''));
+      if (!targetId) {
+        return kaya.sendMessage(
+          m.chat,
+          { text: '❌ Réponds à un message ou indique un numéro à retirer.', contextInfo },
+          { quoted: m }
+        );
+      }
 
-    if (!config.owner.includes(targetId)) {
-      return m.reply(`❌ *@${targetId}* n’est pas un owner.`, {
-        mentions: [targetId + '@s.whatsapp.net']
-      });
-    }
+      // ✅ Vérifie si la cible est un owner
+      if (!owners.includes(targetId)) {
+        return kaya.sendMessage(
+          m.chat,
+          { text: `❌ *@${targetId}* n’est pas un owner.`, mentions: [targetId + '@s.whatsapp.net'], contextInfo },
+          { quoted: m }
+        );
+      }
 
-    if (targetId === senderId) {
-      return m.reply('🛑 *Tu ne peux pas te retirer toi-même.*');
-    }
+      // ✅ Empêche de se retirer soi-même
+      if (targetId === senderId) {
+        return kaya.sendMessage(
+          m.chat,
+          { text: '🛑 Tu ne peux pas te retirer toi-même.', contextInfo },
+          { quoted: m }
+        );
+      }
 
-    config.owner = config.owner.filter(o => o !== targetId);
-    config.saveUserConfig({ owner: config.owner });
+      // ✅ Retire l’owner et sauvegarde
+      const updatedOwners = owners.filter(o => o !== targetId);
+      config.saveConfig({ OWNER_NUMBER: updatedOwners.join(',') });
 
-    await kaya.sendMessage(m.chat, {
-      text: `╭━━〔 🔓 RETRAIT OWNER 〕━━⬣
+      return kaya.sendMessage(
+        m.chat,
+        {
+          text: `╭━━〔 🔓 RETRAIT OWNER 〕━━⬣
 ├ 📲 Numéro : @${targetId}
-├ ❌ Statut : *Supprimé de la liste des owners*
+├ ❌ Statut : Supprimé de la liste des owners
 ├ 🧹 Nettoyage terminé
 ╰────────────────────⬣`,
-      mentions: [targetId + '@s.whatsapp.net']
-    }, { quoted: m });
+          mentions: [targetId + '@s.whatsapp.net'],
+          contextInfo
+        },
+        { quoted: m }
+      );
+
+    } catch (err) {
+      console.error('Erreur unsudo.js :', err);
+      return kaya.sendMessage(
+        m.chat,
+        { text: '❌ Une erreur est survenue lors du retrait de l’owner.', contextInfo },
+        { quoted: m }
+      );
+    }
   }
 };

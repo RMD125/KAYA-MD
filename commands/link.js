@@ -1,44 +1,53 @@
-const config = require('../system/config');
+const config = require('../config');
+const checkAdminOrOwner = require('../utils/checkAdmin');
+
+const contextInfo = {
+  forwardingScore: 999,
+  isForwarded: true,
+  forwardedNewsletterMessageInfo: {
+    newsletterJid: '120363402565816662@newsletter',
+    newsletterName: 'KAYA MD',
+    serverMessageId: 143
+  }
+};
 
 module.exports = {
   name: 'link',
-  description: 'Envoie le lien d’invitation du groupe',
-  category: 'groupe',
+  description: '📎 Obtenir le lien d’invitation du groupe (Admins uniquement)',
+  category: 'Groupe',
 
-  run: async (kaya, m, msg, store, args) => {
-    if (!m.isGroup) {
-      return m.reply('❌ Cette commande fonctionne uniquement dans un groupe.');
-    }
-
-    const metadata = await kaya.groupMetadata(m.chat).catch(() => null);
-    if (!metadata) return m.reply('❌ Impossible de récupérer les informations du groupe.');
-
-    const senderId = m.sender.split('@')[0];
-    const isAdmin = metadata.participants.find(p => p.id === m.sender)?.admin;
-    const isOwner = config.owner.includes(senderId);
-    const botId = kaya.user.id.split(':')[0] + '@s.whatsapp.net';
-    const isBotAdmin = metadata.participants.find(p => p.id === botId)?.admin;
-
-    if (!isAdmin && !isOwner) {
-      return m.reply('🚫 *Seuls les administrateurs ou le propriétaire du bot peuvent utiliser cette commande.*');
-    }
-
-    if (!isBotAdmin) {
-      return m.reply('❌ *KAYA-MD doit être administrateur pour générer un lien d\'invitation.*');
-    }
-
+  run: async (kaya, m, msg, store, args, { isAdminOrOwner }) => { // ✅ prend isAdminOrOwner depuis le handler
     try {
+      if (!m.isGroup) {
+        return kaya.sendMessage(m.chat, {
+          text: '❌ Cette commande fonctionne uniquement dans un groupe.',
+          contextInfo
+        }, { quoted: m });
+      }
+
+      // ✅ Vérifie si l'utilisateur est admin ou owner
+      if (!isAdminOrOwner) {
+        return kaya.sendMessage(m.chat, {
+          text: '🚫 Seuls les *Admins* ou le *Propriétaire* peuvent obtenir le lien du groupe.',
+          contextInfo
+        }, { quoted: m });
+      }
+
+      // Récupère le lien du groupe
       const inviteCode = await kaya.groupInviteCode(m.chat);
       const groupLink = `https://chat.whatsapp.com/${inviteCode}`;
 
-      await kaya.sendMessage(m.chat, {
-        text: `╭━━〔 🔗 LIEN DU GROUPE 〕━━⬣
-├ 📎 *Lien :* ${groupLink}
-╰────────────────────⬣`
-      });
+      return kaya.sendMessage(m.chat, {
+        text: `🔗 Voici le lien d’invitation du groupe :\n${groupLink}`,
+        contextInfo
+      }, { quoted: m });
+
     } catch (err) {
-      console.error(err);
-      return m.reply('❌ *Erreur lors de la génération du lien.*');
+      console.error('Erreur commande link:', err);
+      return kaya.sendMessage(m.chat, {
+        text: '❌ Impossible de récupérer le lien du groupe.',
+        contextInfo
+      }, { quoted: m });
     }
   }
 };

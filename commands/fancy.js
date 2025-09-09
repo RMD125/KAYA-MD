@@ -107,17 +107,7 @@ ${styles}`,
     const content = args.slice(1).join(" ");
     const fancyText = convertStyle(content, style);
 
-    return kaya.sendMessage(m.chat, {
-      text: fancyText,
-      contextInfo: {
-        forwardingScore: 999,
-        isForwarded: true,
-        forwardedNewsletterMessageInfo: {
-          newsletterJid: '120363402565816662@newsletter',
-          newsletterName: 'KAYA MD',
-          serverMessageId: 143
-        }
-      }
-    }, { quoted: m });
+    // Envoi final SANS contextInfo
+    return kaya.sendMessage(m.chat, { text: fancyText }, { quoted: m });
   }
 };

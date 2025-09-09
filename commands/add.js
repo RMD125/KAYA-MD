@@ -1,4 +1,5 @@
-const { config } = require('../system/config'); // ✅ Accès correct à config.owner
+const checkAdminOrOwner = require('../utils/checkAdmin');
+const decodeJid = require('../utils/decodeJid');
 
 const contextInfo = {
   forwardingScore: 999,
@@ -6,71 +7,78 @@ const contextInfo = {
   forwardedNewsletterMessageInfo: {
     newsletterJid: '120363402565816662@newsletter',
     newsletterName: 'KAYA MD',
-    serverMessageId: 122
+    serverMessageId: 150
   }
 };
 
 module.exports = {
   name: 'add',
-  description: 'Ajoute un utilisateur dans le groupe (owner uniquement)',
+  description: '➕ Ajouter un membre au groupe (Admins/Owner uniquement, silencieux)',
   category: 'Groupe',
+  group: true,
+  admin: true,
+  botAdmin: true,
 
   run: async (kaya, m, msg, store, args) => {
-    const senderNumber = m.sender.split('@')[0];
-
-    if (!config.owner.includes(senderNumber)) {
-      return kaya.sendMessage(m.chat, {
-        text: '🚫 Cette commande est réservée au propriétaire du bot.',
-        contextInfo
-      }, { quoted: m });
-    }
-
-    if (!m.isGroup) {
-      return kaya.sendMessage(m.chat, {
-        text: '❌ Cette commande ne peut être utilisée que dans un groupe.',
-        contextInfo
-      }, { quoted: m });
-    }
-
-    const number = args[0]?.replace(/[^0-9]/g, '');
-    if (!number) {
-      return kaya.sendMessage(m.chat, {
-        text: '❌ Utilisation : *.add numéro*\nExemple : *.add 243970000000*',
-        contextInfo
-      }, { quoted: m });
-    }
-
-    const jid = `${number}@s.whatsapp.net`;
-
     try {
-      await kaya.groupParticipantsUpdate(m.chat, [jid], 'add');
+      if (!m.isGroup) {
+        return kaya.sendMessage(
+          m.chat,
+          { text: '❌ Cette commande fonctionne uniquement dans un groupe.', contextInfo },
+          { quoted: m }
+        );
+      }
 
-      const now = new Date();
-      const options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
-      const dateStr = now.toLocaleDateString('fr-FR', options);
-      const timeStr = now.toLocaleTimeString('fr-FR');
+      // ✅ Vérifie si l'utilisateur est admin ou owner
+      const permissions = await checkAdminOrOwner(kaya, m.chat, m.sender);
+      permissions.isAdminOrOwner = permissions.isAdmin || permissions.isOwner;
 
-      const message = `
-╭━━━━━━〔 KAYA-MD 〕━━━━━⬣
-├ 👤 Nouveau membre : @${number}
-├ ✅ Ajouté avec succès dans le groupe !
-├ 📆 Date : ${dateStr}
-├ ⏰ Heure : ${timeStr}
-╰━━━━━━━━━━━━━━━━━━━━⬣
-`;
+      if (!permissions.isAdminOrOwner) {
+        return kaya.sendMessage(
+          m.chat,
+          { text: '🚫 Seuls les *Admins* ou le *Propriétaire* peuvent ajouter un membre.', contextInfo },
+          { quoted: m }
+        );
+      }
 
-      await kaya.sendMessage(m.chat, {
-        text: message,
-        mentions: [jid],
-        contextInfo
-      }, { quoted: m });
+      // ✅ Vérifie si un numéro est fourni
+      if (!args[0]) {
+        return kaya.sendMessage(
+          m.chat,
+          { text: '❌ Utilisation : *.add 225070000000*', contextInfo },
+          { quoted: m }
+        );
+      }
+
+      const target = args[0].replace(/[^0-9]/g, '') + '@s.whatsapp.net';
+
+      // ✅ Vérifie si la personne est déjà dans le groupe
+      const metadata = await kaya.groupMetadata(m.chat);
+      const targetExists = metadata.participants.find(p => decodeJid(p.id) === decodeJid(target));
+      if (targetExists) {
+        return kaya.sendMessage(
+          m.chat,
+          { text: `ℹ️ @${target.split('@')[0]} est déjà dans le groupe.`, mentions: [target], contextInfo },
+          { quoted: m }
+        );
+      }
+
+      // ✅ Ajoute silencieusement
+      await kaya.groupParticipantsUpdate(m.chat, [target], 'add');
+
+      return kaya.sendMessage(
+        m.chat,
+        { text: `✅ @${target.split('@')[0]} a été ajouté au groupe.`, mentions: [target], contextInfo },
+        { quoted: m }
+      );
 
     } catch (err) {
-      console.error(err);
-      kaya.sendMessage(m.chat, {
-        text: '⚠️ Une erreur est survenue lors de l’ajout. Peut-être que l’utilisateur a restreint les ajouts.',
-        contextInfo
-      }, { quoted: m });
+      console.error('Erreur commande add:', err);
+      return kaya.sendMessage(
+        m.chat,
+        { text: '❌ Impossible d’ajouter ce membre. Vérifie le numéro.', contextInfo },
+        { quoted: m }
+      );
     }
   }
 };

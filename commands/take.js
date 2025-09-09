@@ -1,43 +1,84 @@
-const fs = require('fs');
-const path = require('path');
+const { downloadContentFromMessage } = require('@whiskeysockets/baileys');
+const { Sticker, StickerTypes } = require('wa-sticker-formatter');
+
+const contextInfo = {
+  forwardingScore: 999,
+  isForwarded: true,
+  forwardedNewsletterMessageInfo: {
+    newsletterJid: '120363402565816662@newsletter',
+    newsletterName: 'KAYA MD',
+    serverMessageId: 122
+  }
+};
+
+// Util: convertir stream -> buffer
+async function streamToBuffer(stream) {
+  const chunks = [];
+  for await (const chunk of stream) chunks.push(chunk);
+  return Buffer.concat(chunks);
+}
 
 module.exports = {
   name: 'take',
-  description: 'Ajoute un nom personnalisé dans le pack du sticker',
-  category: 'Utilitaires',
+  description: 'Reprend un sticker/image/vidéo et met l’auteur = pseudo de la personne',
+  category: 'Stickers',
 
   run: async (kaya, m, msg, store, args) => {
     try {
-      const quoted = m.quoted;
-      if (!quoted || !quoted.mimetype || !quoted.mimetype.includes('webp')) {
-        return kaya.sendMessage(m.chat, {
-          text: 
-`╭─「 🤖 *KAYA-MD* 」─⬣
-│ ❌ *Sticker non détecté !*
-│ 💡 Réponds à un sticker puis tape *.take kaya*
-╰──────────────⬣`
+      const authorName = m.pushName || "User";
+
+      // Vérifie qu’il y a une réponse
+      const quoted = m.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+      const current = m.message;
+      const targetMsg = quoted || current;
+
+      if (!targetMsg) {
+        return kaya.sendMessage(m.chat, { 
+          text: '❌ Réponds à un sticker/image/vidéo avec `.take`',
+          contextInfo 
         }, { quoted: m });
       }
 
-      const name = args.join(' ') || m.pushName || 'KAYA-MD';
-      const buffer = await quoted.download();
+      // Détecte type
+      const type = Object.keys(targetMsg)[0];
+      const node = targetMsg[type];
 
-      if (!buffer) {
-        return kaya.sendMessage(m.chat, {
-          text: '❌ Impossible de lire le sticker.'
+      if (!['stickerMessage', 'imageMessage', 'videoMessage'].includes(type)) {
+        return kaya.sendMessage(m.chat, { 
+          text: '❌ Réponds à un sticker/image/vidéo valide.',
+          contextInfo 
         }, { quoted: m });
       }
 
-      await kaya.sendMessage(m.chat, {
-        sticker: buffer,
-        packname: name,
-        author: 'KAYA-MD'
-      }, { quoted: m });
+      // Télécharge le média
+      let kind = "sticker";
+      if (type === 'imageMessage') kind = "image";
+      if (type === 'videoMessage') kind = "video";
+
+      const stream = await downloadContentFromMessage(node, kind);
+      const buffer = await streamToBuffer(stream);
+
+      if (!buffer || buffer.length < 100) {
+        return kaya.sendMessage(m.chat, { text: '❌ Impossible de lire ce média.', contextInfo }, { quoted: m });
+      }
+
+      // Crée le sticker (sans packname, author = pseudo)
+      const sticker = new Sticker(buffer, {
+        author: authorName,        // pseudo de la personne
+        type: StickerTypes.FULL,   // taille pleine
+        quality: 70
+      });
+
+      const webp = await sticker.build();
+
+      // Envoie le sticker
+      await kaya.sendMessage(m.chat, { sticker: webp }, { quoted: m });
 
     } catch (err) {
-      console.error('❌ Erreur :', err);
-      return kaya.sendMessage(m.chat, {
-        text: `❌ Une erreur est survenue : ${err.message}`
+      console.error("Take error:", err);
+      return kaya.sendMessage(m.chat, { 
+        text: "❌ Erreur lors de la création du sticker.",
+        contextInfo 
       }, { quoted: m });
     }
   }

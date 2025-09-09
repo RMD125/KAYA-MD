@@ -1,38 +1,53 @@
-const config = require('../system/config');
+const config = require('../config');
+const checkAdminOrOwner = require('../utils/checkAdmin');
+
+const contextInfo = {
+    forwardingScore: 999,
+    isForwarded: true,
+    forwardedNewsletterMessageInfo: {
+        newsletterJid: '120363402565816662@newsletter',
+        newsletterName: 'KAYA MD',
+        serverMessageId: 201
+    }
+};
 
 module.exports = {
-  name: 'block',
-  description: 'Bloque un utilisateur (owner uniquement)',
-  category: 'owner',
+    name: 'block',
+    description: '🚫 Bloque l’utilisateur en conversation (Owner uniquement)',
+    category: 'Owner',
 
-  run: async (kaya, m, msg, store, args) => {
-    try {
-      const sender = m.sender.split('@')[0];
+    run: async (kaya, m, msg) => {
+        try {
+            // Vérifie si l'expéditeur est owner
+            const permissions = await checkAdminOrOwner(kaya, m.chat, m.sender);
+            if (!permissions.isOwner) {
+                return kaya.sendMessage(
+                    m.chat,
+                    { text: '🚫 Seul le propriétaire peut utiliser cette commande.', contextInfo },
+                    { quoted: m }
+                );
+            }
 
-      // Vérifie si l'utilisateur est bien owner
-      if (!config.owner.includes(sender)) {
-        return kaya.sendMessage(m.chat, {
-          text: '🚫 *Commande réservée au propriétaire du bot.*'
-        }, { quoted: m });
-      }
+            // La personne à bloquer = la personne avec qui le bot converse
+            const target = m.chat; // Pour les conversations privées, m.chat = l'autre numéro
+            if (!target.endsWith('@s.whatsapp.net')) return;
 
-      // Cible à bloquer (soit cité, soit celui qui parle)
-      const target = m.quoted ? m.quoted.sender : m.sender;
+            // Bloque la personne
+            await kaya.updateBlockStatus(target, 'block');
 
-      // Bloquer la cible
-      await kaya.updateBlockStatus(target, 'block');
+            await kaya.sendMessage(
+                m.chat,
+                { text: `✅ L'utilisateur @${target.split('@')[0]} a été bloqué.`, mentions: [target], contextInfo },
+                { quoted: m }
+            );
 
-      // Confirmation
-      await kaya.sendMessage(m.chat, {
-        text: `✅ Utilisateur *@${target.split('@')[0]}* a été bloqué.`,
-        mentions: [target]
-      }, { quoted: m });
-
-    } catch (e) {
-      console.error('❌ Erreur block.js :', e);
-      await kaya.sendMessage(m.chat, {
-        text: '❌ Une erreur est survenue lors du blocage.'
-      }, { quoted: m });
+        } catch (err) {
+            console.error('❌ Erreur commande block :', err);
+            return kaya.sendMessage(
+                m.chat,
+                { text: `❌ Impossible de bloquer l'utilisateur : ${err.message}`, contextInfo },
+                { quoted: m }
+            );
+        }
     }
-  }
 };

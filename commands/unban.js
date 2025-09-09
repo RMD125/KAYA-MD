@@ -1,51 +1,94 @@
-const fs = require('fs');
-const path = require('path');
-const config = require('../system/config');
+const fs = require("fs");
+const path = require("path");
+const checkAdminOrOwner = require("../utils/checkAdmin");
 
-const banFile = path.join(__dirname, '../data/ban.json');
-if (!fs.existsSync(banFile)) fs.writeFileSync(banFile, '{}');
-const banData = JSON.parse(fs.readFileSync(banFile));
+const contextInfo = {
+  forwardingScore: 999,
+  isForwarded: true,
+  forwardedNewsletterMessageInfo: {
+    newsletterJid: "120363402565816662@newsletter",
+    newsletterName: "KAYA MD",
+    serverMessageId: 143
+  }
+};
+
+const banFile = path.join(__dirname, "../data/ban.json");
+
+// Charger la liste des bannis
+let bannedUsers = [];
+if (fs.existsSync(banFile)) {
+  bannedUsers = JSON.parse(fs.readFileSync(banFile, "utf-8"));
+} else {
+  fs.writeFileSync(banFile, JSON.stringify(bannedUsers, null, 2));
+}
+
+// Fonction pour sauvegarder
+function saveBanned() {
+  fs.writeFileSync(banFile, JSON.stringify(bannedUsers, null, 2));
+}
 
 module.exports = {
-  name: 'unban',
-  description: 'Débannir un utilisateur (owner uniquement)',
+  name: "unban",
+  description: "Débannir un utilisateur du bot",
+  category: "Owner",
 
   run: async (kaya, m, msg, store, args) => {
-    const senderId = m.sender.split('@')[0].replace(/[^0-9]/g, '');
-    if (!config.owner.includes(senderId)) {
-      return m.reply('❌ *Cette commande est réservée au propriétaire du bot.*');
+    try {
+      // ✅ Vérifie si le sender est owner
+      const permissions = await checkAdminOrOwner(kaya, m.chat, m.sender);
+      if (!permissions.isOwner) {
+        return kaya.sendMessage(
+          m.chat,
+          { text: "🚫 Cette commande est réservée au propriétaire du bot.", contextInfo },
+          { quoted: m }
+        );
+      }
+
+      // Récupération du numéro cible (reply / mention / argument)
+      let target = m.quoted?.sender?.split("@")[0];
+
+      if (!target) {
+        if (msg.message?.extendedTextMessage?.contextInfo?.mentionedJid?.length) {
+          target = msg.message.extendedTextMessage.contextInfo.mentionedJid[0].split("@")[0];
+        } else if (args[0]) {
+          target = args[0].replace(/\D/g, "");
+        }
+      }
+
+      if (!target) {
+        return kaya.sendMessage(
+          m.chat,
+          { text: "❌ Indique le numéro à débannir (ou reply au message).", contextInfo },
+          { quoted: m }
+        );
+      }
+
+      // Vérifie si l'utilisateur est dans la liste des bannis
+      if (!bannedUsers.includes(target)) {
+        return kaya.sendMessage(
+          m.chat,
+          { text: `❌ L'utilisateur *@${target}* n'est pas banni.`, mentions: [target + '@s.whatsapp.net'], contextInfo },
+          { quoted: m }
+        );
+      }
+
+      // Retirer l'utilisateur de la liste
+      bannedUsers = bannedUsers.filter(u => u !== target);
+      saveBanned();
+
+      return kaya.sendMessage(
+        m.chat,
+        { text: `✅ Utilisateur *@${target}* débanni avec succès !`, mentions: [target + '@s.whatsapp.net'], contextInfo },
+        { quoted: m }
+      );
+
+    } catch (err) {
+      console.error("Erreur unban.js :", err);
+      return kaya.sendMessage(
+        m.chat,
+        { text: "❌ Impossible de débannir l'utilisateur.", contextInfo },
+        { quoted: m }
+      );
     }
-
-    let targetJid;
-
-    if (m.quoted) {
-      targetJid = m.quoted.sender;
-    } else if (args[0]) {
-      const number = args[0].replace(/[^0-9]/g, '');
-      if (!number) return m.reply('❗ *Numéro invalide.*');
-      targetJid = number + '@s.whatsapp.net';
-    } else {
-      return m.reply('❗ *Réponds au message de la personne ou mets son numéro en argument.*');
-    }
-
-    const targetId = targetJid.split('@')[0].replace(/[^0-9]/g, '');
-
-    if (!banData[targetId]) {
-      return m.reply('⚠️ *Cet utilisateur n’est pas banni.*');
-    }
-
-    delete banData[targetId];
-    fs.writeFileSync(banFile, JSON.stringify(banData, null, 2));
-
-    const username = '@' + targetId;
-    const replyText = `╭━━〔 ✅ KAYA-MD 〕━━⬣
-├ 👤 Utilisateur : ${username}
-├ ✅ *L’utilisateur a été débanni avec succès.*
-╰────────────────────⬣`;
-
-    await kaya.sendMessage(m.chat, {
-      text: replyText,
-      mentions: [targetJid],
-    });
   }
 };

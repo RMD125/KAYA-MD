@@ -8,21 +8,23 @@ module.exports = {
   run: async (kaya, m, msg, store, args) => {
     const text = args.join(' ');
     if (!text) {
-      return m.reply('❌ Fournis un texte à convertir en voix.\nExemple : `.voix Bonjour à tous !`');
+      return kaya.sendMessage(m.chat, { text: '❌ Fournis un texte à convertir en voix.\nExemple : `.voix Bonjour à tous !`' }, { quoted: m });
     }
 
     try {
-      const url = getAudioUrl(text, { lang: 'fr' });
-      
+      // Obtenir l'URL audio
+      const url = await getAudioUrl(text, { lang: 'fr' });
+      if (!url) throw new Error('URL audio invalide');
+
       await kaya.sendMessage(m.chat, {
         audio: { url },
-        mimetype: 'audio/mp4',
+        mimetype: 'audio/mpeg', // mp4 ou mpeg selon ce que ton API fournit
         ptt: true
       }, { quoted: m });
 
     } catch (err) {
-      console.error('Erreur voix:', err);
-      return m.reply('❌ Une erreur est survenue.');
+      console.error('Erreur voix :', err);
+      await kaya.sendMessage(m.chat, { text: '❌ Une erreur est survenue lors de la génération de la voix.' }, { quoted: m });
     }
   }
 };

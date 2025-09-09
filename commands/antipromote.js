@@ -1,122 +1,92 @@
-const fs = require('fs');
-const path = require('path');
-const config = require(path.join(__dirname, '../system/config'));
+const fs = require("fs");
+const path = require("path");
+const checkAdminOrOwner = require("../utils/checkAdmin");
 
-const DATA_FILE = path.join(__dirname, '../data/antipromote.json');
+const antiPromoteFile = path.join(__dirname, "../data/antipromote.json");
 
-function ensureDataFile() {
-  const dir = path.dirname(DATA_FILE);
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  if (!fs.existsSync(DATA_FILE)) fs.writeFileSync(DATA_FILE, '{}', 'utf-8');
+let antiPromoteData = {};
+try {
+  antiPromoteData = JSON.parse(fs.readFileSync(antiPromoteFile, "utf-8"));
+} catch {
+  antiPromoteData = {};
+  fs.writeFileSync(antiPromoteFile, "{}");
 }
 
-function loadData() {
-  ensureDataFile();
-  try {
-    return JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
-  } catch {
-    return {};
-  }
+function saveAntiPromote() {
+  fs.writeFileSync(antiPromoteFile, JSON.stringify(antiPromoteData, null, 2));
 }
-
-function saveData(data) {
-  ensureDataFile();
-  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
-}
-
-function getNumberFromJid(jid) {
-  return jid.split('@')[0];
-}
-
-const helpText = `
-╭─「 🤖 *KAYA-MD* - ANTIPROMOTE 」─⬣
-│ Usage :
-│ .antipromote on  ➡️ Active l'anti-promotion
-│ .antipromote off ➡️ Désactive l'anti-promotion
-│
-│ Empêche la promotion des membres en admin sans autorisation.
-╰───────────────⬣
-`;
 
 const contextInfo = {
   forwardingScore: 999,
   isForwarded: true,
   forwardedNewsletterMessageInfo: {
-    newsletterJid: '120363402565816662@newsletter',
-    newsletterName: 'KAYA MD',
-    serverMessageId: 122
+    newsletterJid: "120363402565816662@newsletter",
+    newsletterName: "KAYA MD",
+    serverMessageId: 178
   }
 };
 
+// Set pour marquer les actions automatiques et éviter la boucle
+const processing = new Set();
+
 module.exports = {
-  name: 'antipromote',
-  description: "🤖 Active ou désactive l'anti-promotion dans le groupe (owner ou admin seulement)",
+  name: "antipromote",
+  description: "🚫 Active ou désactive la protection contre la promotion automatique",
+  category: "Sécurité",
+  group: true,
+  admin: true,
 
   run: async (kaya, m, msg, store, args) => {
-    const senderNumber = getNumberFromJid(m.sender);
+    if (!m.isGroup) return kaya.sendMessage(m.chat, { text: '❌ Cette commande ne fonctionne que dans un groupe.' }, { quoted: m });
+
+    const permissions = await checkAdminOrOwner(kaya, m.chat, m.sender);
+    permissions.isAdminOrOwner = permissions.isAdmin || permissions.isOwner;
+
+    if (!permissions.isAdminOrOwner) {
+      return kaya.sendMessage(m.chat, { text: '🚫 Seuls les admins ou owners peuvent activer/désactiver cette protection.' }, { quoted: m });
+    }
+
     const chatId = m.chat;
+    const subCmd = args[0]?.toLowerCase();
 
-    if (!m.isGroup) {
-      return kaya.sendMessage(chatId, {
-        text: '❌ *Cette commande ne peut être utilisée que dans un groupe.*',
-        contextInfo
-      }, { quoted: m });
+    if (subCmd === 'on') {
+      antiPromoteData[chatId] = true;
+      saveAntiPromote();
+      return kaya.sendMessage(m.chat, { text: '✅ *AntiPromote activé* : toute promotion sera annulée automatiquement.' }, { quoted: m });
     }
 
-    if (!args[0]) {
-      return kaya.sendMessage(chatId, { text: helpText, contextInfo }, { quoted: m });
+    if (subCmd === 'off') {
+      delete antiPromoteData[chatId];
+      saveAntiPromote();
+      return kaya.sendMessage(m.chat, { text: '❌ *AntiPromote désactivé*.' }, { quoted: m });
     }
 
-    const metadata = await kaya.groupMetadata(chatId);
-    const botId = kaya.user.id.split(':')[0] + '@s.whatsapp.net';
-    const botIsAdmin = metadata.participants.some(p => p.id === botId && p.admin !== null);
-
-    if (!botIsAdmin) {
-      return kaya.sendMessage(chatId, {
-        text: "❌ Je dois être administrateur dans ce groupe pour gérer l'anti-promotion.",
-        contextInfo
-      }, { quoted: m });
-    }
-
-    const senderIsOwner = config.owner.includes(senderNumber);
-    const senderIsAdmin = metadata.participants.some(p => p.id === m.sender && p.admin !== null);
-
-    if (!senderIsOwner && !senderIsAdmin) {
-      return kaya.sendMessage(chatId, {
-        text: '❌ Seul un administrateur ou le propriétaire du bot peut utiliser cette commande.',
-        contextInfo
-      }, { quoted: m });
-    }
-
-    const arg = args[0].toLowerCase();
-
-    if (!['on', 'off'].includes(arg)) {
-      return kaya.sendMessage(chatId, { text: helpText, contextInfo }, { quoted: m });
-    }
-
-    const data = loadData();
-
-    if (arg === 'on') {
-      data[chatId] = true;
-      saveData(data);
-      return kaya.sendMessage(chatId, {
-        text: '╭─「 🤖 *KAYA-MD* 」─⬣\n│ ✅ *Anti-promotion activé*\n╰───────────────⬣',
-        contextInfo
-      }, { quoted: m });
-    } else {
-      if (data[chatId]) {
-        delete data[chatId];
-        saveData(data);
-      }
-      return kaya.sendMessage(chatId, {
-        text: '╭─「 🤖 *KAYA-MD* 」─⬣\n│ ❌ *Anti-promotion désactivé*\n╰───────────────⬣',
-        contextInfo
-      }, { quoted: m });
-    }
+    return kaya.sendMessage(m.chat, { text: '⚙️ Utilisation : `.antipromote on` ou `.antipromote off`' }, { quoted: m });
   },
 
-  isActive(chatId) {
-    const data = loadData();
-    return !!data[chatId];
+  participantUpdate: async (kaya, update) => {
+    const { id: chatId, participants, action, byBot } = update;
+
+    if (!antiPromoteData[chatId]) return;
+    if (action !== "promote") return;
+    if (byBot) return; // Ignore les actions générées par le bot
+
+    for (const user of participants) {
+      if (processing.has(user)) continue; // Ignore si déjà traité
+
+      processing.add(user);
+      try {
+        await kaya.groupParticipantsUpdate(chatId, [user], "demote", { byBot: true });
+        await kaya.sendMessage(chatId, {
+          text: `🚫 *AntiPromote activé*\n@${user.split('@')[0]} a été rétrogradé automatiquement.`,
+          mentions: [user]
+        });
+      } catch (err) {
+        console.error('Erreur antipromote auto:', err);
+      } finally {
+        // Retirer le marqueur après 2s pour éviter boucle infinie
+        setTimeout(() => processing.delete(user), 2000);
+      }
+    }
   }
 };

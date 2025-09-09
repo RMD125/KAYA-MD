@@ -1,84 +1,107 @@
-const fs = require('fs');
-const path = require('path');
-const { exec } = require('child_process');
+const { downloadContentFromMessage } = require('@whiskeysockets/baileys');
+const { Sticker, StickerTypes } = require('wa-sticker-formatter');
+
+const contextInfo = {
+  forwardingScore: 999,
+  isForwarded: true,
+  forwardedNewsletterMessageInfo: {
+    newsletterJid: '120363402565816662@newsletter',
+    newsletterName: 'KAYA MD',
+    serverMessageId: 122
+  }
+};
+
+// Util: stream -> buffer
+async function streamToBuffer(stream) {
+  const chunks = [];
+  for await (const chunk of stream) chunks.push(chunk);
+  return Buffer.concat(chunks);
+}
 
 module.exports = {
   name: 'sticker',
-  description: 'Transforme une image ou une vidéo courte en sticker',
-  category: 'Utilitaires',
+  description: 'Convertit une image (ou courte vidéo) en sticker avec author = pseudo by KAYA-MD',
+  category: 'Stickers',
 
   run: async (kaya, m, msg, store, args) => {
     try {
-      const quoted = m.quoted;
-      if (!quoted) {
-        return kaya.sendMessage(m.chat, {
-          text:
-`╭─「 🤖 *KAYA-MD* 」─⬣
-│ 🖼️ *Aucun média détecté !*
-│ 📌 *Utilisation correcte :*
-│ Réponds à une image ou une vidéo courte
-│ puis tape la commande *.sticker*
-╰──────────────⬣`
-        }, { quoted: m });
+      // 1) Récupère le message cible (priorité au message cité)
+      const quoted = m.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+      const current = m.message;
+      const targetMsg = quoted || current;
+
+      if (!targetMsg) {
+        return kaya.sendMessage(
+          m.chat,
+          { text: '❌ Réponds à une image/vidéo ou envoie-en une avec `.sticker`', contextInfo },
+          { quoted: m }
+        );
       }
 
-      const mime = quoted.mimetype || '';
-      if (!/^image|video/.test(mime)) {
-        return kaya.sendMessage(m.chat, {
-          text:
-`╭─「 🤖 *KAYA-MD* 」─⬣
-│ ❌ *Le média n'est pas valide !*
-│ 📌 *Utilise une image ou une vidéo courte.*
-╰──────────────⬣`
-        }, { quoted: m });
+      // 2) Type & nœud
+      const type = Object.keys(targetMsg)[0];
+      const node = targetMsg[type];
+
+      if (!['imageMessage', 'videoMessage'].includes(type)) {
+        return kaya.sendMessage(
+          m.chat,
+          { text: '❌ Réponds à une image/vidéo (JPEG/PNG ou vidéo courte).', contextInfo },
+          { quoted: m }
+        );
       }
 
-      const buffer = await quoted.download();
-      if (!buffer) {
-        return kaya.sendMessage(m.chat, {
-          text:
-`❌ Erreur : impossible de lire le média.
-📌 Vérifie que le fichier n’est pas corrompu.`
-        }, { quoted: m });
-      }
-
-      const tempDir = path.join(__dirname, '../temp');
-      if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir);
-
-      const isVideo = mime.includes('video');
-      const inputFile = path.join(tempDir, `input_${Date.now()}.${isVideo ? 'mp4' : 'jpg'}`);
-      const outputFile = path.join(tempDir, `output_${Date.now()}.webp`);
-
-      fs.writeFileSync(inputFile, buffer);
-
-      const cmd = isVideo
-        ? `ffmpeg -i ${inputFile} -vcodec libwebp -filter:v "scale=512:512:force_original_aspect_ratio=decrease,fps=15" -lossless 0 -qscale 70 -preset default -an -vsync 0 -loop 0 -t 8 ${outputFile}`
-        : `ffmpeg -i ${inputFile} -vcodec libwebp -filter:v "scale=512:512:force_original_aspect_ratio=decrease" -lossless 1 -qscale 80 -preset default -an -vsync 0 ${outputFile}`;
-
-      exec(cmd, async (err) => {
-        if (err) {
-          console.error('❌ Erreur de conversion :', err);
-          return kaya.sendMessage(m.chat, {
-            text: `❌ ffmpeg a échoué : ${err.message}`
-          }, { quoted: m });
+      // 3) Sécurité vidéo: limite de durée
+      if (type === 'videoMessage') {
+        const seconds = node.seconds || node.videoMessage?.seconds || 0;
+        if (seconds > 8) {
+          return kaya.sendMessage(
+            m.chat,
+            { text: '⏱️ La vidéo est trop longue. Max 8 secondes pour un sticker.', contextInfo },
+            { quoted: m }
+          );
         }
+      }
 
-        const sticker = fs.readFileSync(outputFile);
-        await kaya.sendMessage(m.chat, {
-          sticker
-        }, {
-          quoted: m
-        });
+      // 4) Télécharge le média en buffer
+      const kind = type === 'imageMessage' ? 'image' : 'video';
+      const stream = await downloadContentFromMessage(node, kind);
+      const buffer = await streamToBuffer(stream);
 
-        fs.unlinkSync(inputFile);
-        fs.unlinkSync(outputFile);
+      if (!buffer || buffer.length < 100) {
+        return kaya.sendMessage(
+          m.chat,
+          { text: '❌ Impossible de lire ce média. Réessaie avec une image/vidéo différente.', contextInfo },
+          { quoted: m }
+        );
+      }
+
+      // 5) Crée le sticker (sans packname, juste author)
+      const pseudo = m.pushName || 'User';
+      const sticker = new Sticker(buffer, {
+        author: `${pseudo} by KAYA-MD`,   // uniquement l’author
+        type: StickerTypes.FULL,
+        quality: 80
       });
 
+      const webp = await sticker.build();
+
+      // 6) Envoie le sticker
+      await kaya.sendMessage(m.chat, { sticker: webp }, { quoted: m });
+
     } catch (err) {
-      console.error('❌ Erreur générale :', err);
-      return kaya.sendMessage(m.chat, {
-        text: `❌ Une erreur est survenue : ${err.message}`
-      }, { quoted: m });
+      console.error('Sticker error:', err);
+      if (String(err?.message || err).toLowerCase().includes('ffmpeg')) {
+        return kaya.sendMessage(
+          m.chat,
+          { text: '❌ ffmpeg est requis pour les stickers vidéo. Installe-le puis réessaie.', contextInfo },
+          { quoted: m }
+        );
+      }
+      return kaya.sendMessage(
+        m.chat,
+        { text: '❌ Erreur lors de la création du sticker.', contextInfo },
+        { quoted: m }
+      );
     }
   }
 };

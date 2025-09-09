@@ -1,22 +1,41 @@
-const config = require('../system/config');
+const config = require('../config');
 
 module.exports = {
   name: 'left',
   description: 'Le bot quitte le groupe (owner uniquement)',
-  category: 'owner',
+  category: 'Owner',
 
   run: async (kaya, m) => {
-    const sender = m.sender.split('@')[0];
+    const senderNumber = m.sender.split('@')[0];
+    const owners = config.OWNER_NUMBER.split(',').map(o => o.trim());
 
-    if (!config.owner.includes(sender)) {
-      return m.reply('🚫 *Commande réservée au propriétaire du bot.*');
+    // ✅ Vérifie que seul le propriétaire peut utiliser
+    if (!owners.includes(senderNumber)) {
+      return kaya.sendMessage(
+        m.chat,
+        { text: '🚫 Cette commande est réservée au propriétaire du bot.' },
+        { quoted: m }
+      );
     }
 
     if (!m.isGroup) {
-      return m.reply('❗ Cette commande doit être utilisée dans un groupe.');
+      return kaya.sendMessage(
+        m.chat,
+        { text: '❗ Cette commande doit être utilisée dans un groupe.' },
+        { quoted: m }
+      );
     }
 
-    await m.reply('👋 *KAYA-MD quitte le groupe...*');
-    await kaya.groupLeave(m.chat);
+    try {
+      // Le bot quitte silencieusement le groupe
+      await kaya.groupLeave(m.chat);
+    } catch (e) {
+      console.error('Erreur leave:', e);
+      await kaya.sendMessage(
+        m.chat,
+        { text: '⚠️ Impossible de quitter le groupe.' },
+        { quoted: m }
+      );
+    }
   }
 };

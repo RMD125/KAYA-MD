@@ -1,41 +1,80 @@
 const axios = require('axios');
+const fs = require('fs');
+const path = require('path');
+const { Tiktok } = require('../lib/tiktok');
 
 module.exports = {
   name: 'tiktok',
-  description: 'Télécharge une vidéo TikTok sans watermark à partir d’un lien',
-  run: async (kaya, m, msg, store, args) => {
-    const url = args[0];
-    if (!url || !url.includes('tiktok.com')) {
-      return m.reply('❌ Merci de fournir un lien TikTok valide.\nUsage : .tiktok <lien>');
+  description: 'Télécharge une vidéo TikTok sans filigrane.',
+  category: 'Téléchargement',
+
+  async run(kaya, m, msg, store, args) {
+    const query = args.join(" ");
+    if (!query) {
+      return kaya.sendMessage(m.chat, {
+        text: `╭━━━〔 📥 TIKTOK DOWNLOADER 〕━━⬣
+┃ ❌ Aucun lien détecté !
+┃ 📌 Utilisation : *.tiktok https://vm.tiktok.com/xxx*
+╰━━━━━━━━━━━━━━━━━━━━━━━━⬣`,
+        contextInfo: {
+          forwardingScore: 999,
+          isForwarded: true,
+          forwardedNewsletterMessageInfo: {
+            newsletterJid: '120363402565816662@newsletter',
+            newsletterName: 'KAYA MD',
+            serverMessageId: 143
+          }
+        }
+      }, { quoted: m });
     }
 
     try {
-      await m.reply('⏳ Recherche de la vidéo TikTok...');
+      const data = await Tiktok(query);
+      const url = data.nowm;
 
-      // Appel à l'API tierce (TikTok-scraper alternatif)
-      const response = await axios.get('https://api.tikapi.io/api/v1/video/detail', {
-        params: { video_url: url },
-        headers: {
-          'x-rapidapi-host': 'tiktok-scraper.p.rapidapi.com',
-          'x-rapidapi-key': 'TA_CLE_API_RAPIDAPI_ICI' // À remplacer par ta clé RapidAPI
-        }
-      });
-
-      if (!response.data || !response.data.video || !response.data.video.download) {
-        return m.reply('❌ Impossible de récupérer la vidéo TikTok.');
+      if (!url) {
+        return kaya.sendMessage(m.chat, {
+          text: `❌ Impossible de récupérer la vidéo TikTok.\n🔁 Essaie avec un autre lien ou plus tard.`,
+          contextInfo: {
+            forwardingScore: 999,
+            isForwarded: true
+          }
+        }, { quoted: m });
       }
 
-      const videoUrl = response.data.video.download.no_watermark || response.data.video.download.watermark;
+      const tempDir = path.join(__dirname, '../temp');
+      if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir);
+      const filePath = path.join(tempDir, `tiktok_${Date.now()}.mp4`);
 
-      // Envoi de la vidéo
+      const res = await axios.get(url, { responseType: 'arraybuffer' });
+      fs.writeFileSync(filePath, res.data);
+
       await kaya.sendMessage(m.chat, {
-        video: { url: videoUrl },
-        caption: 'Voici ta vidéo TikTok sans watermark !'
+        video: fs.readFileSync(filePath),
+        caption:
+`╭━━━〔 🎬 TIKTOK VIDÉO 〕━━⬣
+📌 *Titre* : ${data.title || "Non disponible"}
+👤 *Auteur* : ${data.author || "Inconnu"}
+   *By* : KAYA-MD
+╰━━━━━━━━━━━━━━━━━━━━━━⬣`,
+        contextInfo: {
+          forwardingScore: 999,
+          isForwarded: true,
+          forwardedNewsletterMessageInfo: {
+            newsletterJid: '120363402565816662@newsletter',
+            newsletterName: 'KAYA MD',
+            serverMessageId: 143
+          }
+        }
       }, { quoted: m });
 
-    } catch (error) {
-      console.error('Erreur commande tiktok:', error.response?.data || error.message);
-      return m.reply('❌ Une erreur est survenue lors du téléchargement. Essaie plus tard.');
+      fs.unlinkSync(filePath); // Nettoyage
+
+    } catch (e) {
+      console.error('Erreur TikTok :', e);
+      await kaya.sendMessage(m.chat, {
+        text: `❌ Une erreur est survenue : ${e.message || "Inconnue"}`
+      }, { quoted: m });
     }
   }
 };

@@ -24,10 +24,6 @@ module.exports = {
 ┃ ✈️ *Canal Telegram* :
 ┃ https://t.me/techword1
 ╰━━━━━━━━━━━━━━━━━━━━⬣
-╭══════❖ MERCI ❖══════╮
-┃      Merci d'utiliser  
-┃       *KAYA-MD* !
-╰════════════════════╯
     `.trim();
 
     await kaya.sendMessage(m.chat, {

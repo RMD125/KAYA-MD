@@ -7,7 +7,7 @@ module.exports = {
     description: "📢 Mentionne tous les membres du groupe avec un message personnalisé et élégant.",
     category: "groupe",
     group: true,
-    admin: true,
+    admin: false, // 🔓 accessible à tout le monde
 
     run: async (kaya, m, msg, store, args) => {
         try {
@@ -17,35 +17,37 @@ module.exports = {
                 }, { quoted: m });
             }
 
-            const groupMetadata = await kaya.groupMetadata(m.chat);
-            const participants = groupMetadata.participants.map(p => p.id);
-            const senderTag = m.sender.split('@')[0];
+            const metadata = await kaya.groupMetadata(m.chat);
+            const participants = metadata.participants.map(p => p.id);
+
             const date = moment().format('dddd D MMMM YYYY');
             const time = moment().format('HH:mm:ss');
 
-            const mentionList = participants.map(p => `👤 @${p.split('@')[0]}`).join('\n');
+            // 📌 Extraire uniquement les numéros pour affichage
+            const numbers = participants.map(p => p.split('@')[0]);
 
-            const header = "╔════════════════╗\n" +
-                           "║      🤖 𝗞𝗔𝗬𝗔 𝗠𝗗 🤖        ║\n" +
-                           "║      🔔 *TAG ALL* 🔔        ║\n" +
-                           "╚════════════════╝";
+            // 🌍 Nombre de pays distincts (on prend les 3 premiers chiffres du numéro)
+            const countryCodes = [...new Set(numbers.map(num => num.slice(0, 3)))];
+            const totalCountries = countryCodes.length;
 
-            const info = `📅 *Date:* ${date}\n` +
-                         `⏰ *Heure:* ${time}\n` +
-                         `👥 *Membres mentionnés:* ${participants.length}\n\n`;
+            const mentionList = numbers.map(num => `👤 @${num}`).join('\n');
 
-            const messageBody = args.length > 0 
-                ? args.join(" ") 
-                : "_Aucun message personnalisé fourni._";
+            const fullMessage =
+`╔════════════════╗
+║   KAYA MD     TAG ALL 
+╚════════════════╝
 
-            const footer = `\n⚠️ Merci de respecter les règles du groupe !\n` +
-                           `📢 Envoyé par : @${senderTag}`;
+📅 Date: ${date}
+⏰ Heure: ${time}
+👥 Membres: ${participants.length}
+🌍 ${totalCountries} pays dans ce groupe 
 
-            const fullMessage = `${header}\n\n${info}📣 *Message de l'admin :*\n${messageBody}\n\n👥 *Membres :*\n${mentionList}${footer}`;
+👥 Membres :
+${mentionList}`;
 
             await kaya.sendMessage(m.chat, {
                 text: fullMessage,
-                mentions: participants,
+                mentions: participants, // ✅ JID complet pour les mentions
             }, { quoted: m });
 
         } catch (error) {

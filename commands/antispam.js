@@ -1,110 +1,145 @@
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
+const checkAdminOrOwner = require("../utils/checkAdmin");
 
-const SPAM_FILE = path.join(__dirname, '../data/antispam.json');
-let spamSettings = { enabled: false };
-if (fs.existsSync(SPAM_FILE)) {
-  spamSettings = JSON.parse(fs.readFileSync(SPAM_FILE));
-} else {
-  fs.writeFileSync(SPAM_FILE, JSON.stringify(spamSettings, null, 2));
+const contextInfo = {
+    forwardingScore: 999,
+    isForwarded: true,
+    forwardedNewsletterMessageInfo: {
+        newsletterJid: "120363402565816662@newsletter",
+        newsletterName: "KAYA MD",
+        serverMessageId: 161
+    }
+};
+
+const antispamFile = path.join(__dirname, "../data/antiSpamGroups.json");
+
+// Charger les groupes anti-spam
+function loadAntiSpamGroups() {
+    if (!fs.existsSync(antispamFile)) return new Set();
+    try {
+        const groups = JSON.parse(fs.readFileSync(antispamFile, "utf-8"));
+        return new Set(groups);
+    } catch {
+        return new Set();
+    }
 }
 
-const spamTracker = {};
+// Sauvegarder les groupes anti-spam
+function saveAntiSpamGroups(groups) {
+    fs.writeFileSync(antispamFile, JSON.stringify([...groups], null, 4));
+}
+
+// Initialisation globale
+if (!global.antiSpamGroups) {
+    global.antiSpamGroups = loadAntiSpamGroups();
+}
+
+// Stockage en mémoire des messages récents par utilisateur
+const userMessages = new Map();
 
 module.exports = {
-  name: 'antispam',
-  description: 'Active ou désactive le système anti-spam',
-  category: 'sécurité',
+    name: "antispam",
+    description: "Active ou désactive l'anti-spam dans un groupe",
+    category: "Groupe",
+    group: true,
+    admin: true,
 
-  async run(kaya, m, msg, store, args) {
-    const command = args[0]?.toLowerCase();
+    run: async (kaya, m, msg, store, args) => {
+        const chatId = m.chat;
+        const action = args[0]?.toLowerCase();
 
-    if (!['on', 'off'].includes(command)) {
-      return kaya.sendMessage(m.chat, {
-        text: `╭━━━〔 🔧 KAYA-MD ┃ AntiSpam 〕━━⬣
-┃ *Utilisation :* .antispam on / off
-┃ *Statut actuel :* ${spamSettings.enabled ? '✅ Activé' : '❌ Désactivé'}
-╰━━━━━━━━━━━━━━━━━━━━━━━━━⬣`,
-        contextInfo: {
-          forwardingScore: 999,
-          isForwarded: true,
-          forwardedNewsletterMessageInfo: {
-            newsletterJid: '120363402565816662@newsletter',
-            newsletterName: 'KAYA MD',
-            serverMessageId: 122
-          }
+        const permissions = await checkAdminOrOwner(kaya, chatId, m.sender);
+        if (!permissions.isAdminOrOwner) {
+            return kaya.sendMessage(
+                chatId,
+                { text: "🚫 Seuls les *Admins* ou le *Propriétaire* peuvent activer/désactiver l’anti-spam.", contextInfo },
+                { quoted: m }
+            );
         }
-      }, { quoted: m });
-    }
 
-    spamSettings.enabled = command === 'on';
-    fs.writeFileSync(SPAM_FILE, JSON.stringify(spamSettings, null, 2));
-
-    await kaya.sendMessage(m.chat, {
-      text: `✅ Anti-Spam est maintenant *${command === 'on' ? 'activé' : 'désactivé'}*.`,
-      contextInfo: {
-        forwardingScore: 999,
-        isForwarded: true,
-        forwardedNewsletterMessageInfo: {
-          newsletterJid: '120363402565816662@newsletter',
-          newsletterName: 'KAYA MD',
-          serverMessageId: 122
+        if (!action || !["on", "off"].includes(action)) {
+            return kaya.sendMessage(
+                chatId,
+                { text: "⚙️ Usage: `.antispam on` ou `.antispam off`", contextInfo },
+                { quoted: m }
+            );
         }
-      }
-    }, { quoted: m });
-  },
 
-  async onMessage(kaya, m) {
-    if (!spamSettings.enabled || !m.message || !m.key || m.key.fromMe) return;
+        const antispamGroups = new Set(global.antiSpamGroups);
 
-    const sender = m.sender;
-    const now = Date.now();
+        if (action === "on") {
+            if (!antispamGroups.has(chatId)) antispamGroups.add(chatId);
+            global.antiSpamGroups = antispamGroups;
+            saveAntiSpamGroups(antispamGroups);
 
-    if (!spamTracker[sender]) {
-      spamTracker[sender] = { timestamps: [] };
-    }
+            return kaya.sendMessage(
+                chatId,
+                { text: "✅ *Anti-spam activé* dans ce groupe.\nUn utilisateur sera kick après *7 messages* (texte ou médias) envoyés en 10s.", contextInfo },
+                { quoted: m }
+            );
+        } else {
+            if (antispamGroups.has(chatId)) antispamGroups.delete(chatId);
+            global.antiSpamGroups = antispamGroups;
+            saveAntiSpamGroups(antispamGroups);
 
-    const tracker = spamTracker[sender];
-    tracker.timestamps = tracker.timestamps.filter(t => now - t < 10000);
-    tracker.timestamps.push(now);
+            return kaya.sendMessage(
+                chatId,
+                { text: "❌ *Anti-spam désactivé* dans ce groupe.", contextInfo },
+                { quoted: m }
+            );
+        }
+    },
 
-    if (tracker.timestamps.length >= 7) {
-      try {
-        await kaya.groupParticipantsUpdate(m.chat, [sender], 'remove');
+    // 📌 Détection automatique
+    detect: async (kaya, m) => {
+        const chatId = m.chat;
+        const sender = m.sender;
 
-        if (store && store.messages && store.messages[m.chat]) {
-          for (const msg of store.messages[m.chat].values()) {
-            if (msg.key?.participant === sender) {
-              await kaya.sendMessage(m.chat, {
-                delete: msg.key
-              });
+        if (!global.antiSpamGroups || !global.antiSpamGroups.has(chatId)) return;
+
+        if (!userMessages.has(sender)) userMessages.set(sender, []);
+
+        const now = Date.now();
+        const records = userMessages
+            .get(sender)
+            .filter(r => now - r.timestamp < 10000); // 10 secondes
+
+        // 🔎 Vérifie si le message est texte ou média
+        const isText = !!m.message?.conversation || !!m.message?.extendedTextMessage;
+        const isMedia =
+            !!m.message?.imageMessage ||
+            !!m.message?.videoMessage ||
+            !!m.message?.documentMessage ||
+            !!m.message?.stickerMessage ||
+            !!m.message?.audioMessage;
+
+        if (isText || isMedia) {
+            records.push({ timestamp: now, key: m.key });
+            userMessages.set(sender, records);
+        }
+
+        // 🚨 Si spam détecté (>=7 messages en 10s)
+        if (records.length >= 7) {
+            try {
+                // Supprimer tous ses messages récents
+                for (const r of records) {
+                    if (r.key) await kaya.sendMessage(chatId, { delete: r.key });
+                }
+
+                // Expulser le spammeur
+                await kaya.groupParticipantsUpdate(chatId, [sender], "remove");
+
+                await kaya.sendMessage(chatId, {
+                    text: `@${sender.split("@")[0]} a été expulsé pour *SPAM* 🚫`,
+                    mentions: [sender],
+                    contextInfo
+                });
+
+                userMessages.delete(sender); // reset
+            } catch (err) {
+                console.error("❌ Erreur anti-spam:", err);
             }
-          }
         }
-
-        await kaya.sendMessage(m.chat, {
-          text: `╭━━━〔 🤖 KAYA-MD ┃ Anti-Spam 〕━━━⬣
-┃ 🚨 *Spam détecté !* (7 msgs / 10 sec)
-┃ 👤 Utilisateur : @${sender.split('@')[0]}
-┃ 🧹 Messages supprimés
-┃ ❌ *Expulsé du groupe*
-╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━⬣`,
-          mentions: [sender],
-          contextInfo: {
-            forwardingScore: 999,
-            isForwarded: true,
-            forwardedNewsletterMessageInfo: {
-              newsletterJid: '120363402565816662@newsletter',
-              newsletterName: 'KAYA MD',
-              serverMessageId: 122
-            }
-          }
-        });
-
-        delete spamTracker[sender];
-      } catch (err) {
-        console.error('Erreur anti-spam :', err);
-      }
     }
-  }
 };
