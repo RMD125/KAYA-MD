@@ -91,13 +91,13 @@ module.exports = {
 │ 🔗 URL     : ${videoUrl}
 ╰─────────────────────╯`;
 
+            // ✅ Song envoyé SANS contextInfo
             await kaya.sendMessage(m.chat, {
                 audio: audioBuffer,
                 mimetype: 'audio/mpeg',
                 fileName: `${audioData.title || videoInfo.title || 'audio'}.mp3`,
                 ptt: false,
-                caption,
-                contextInfo
+                caption
             }, { quoted: m });
 
         } catch (err) {
