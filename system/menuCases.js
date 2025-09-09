@@ -19,11 +19,13 @@ module.exports = {
 ├ 🔓 .unlock
 ├ 🔗 .link
 ├ ⛓️ .antilink on/off  
+├ 📵  .antispam on/off
 ├ 🔰 .promote
 ├ ⛔️ .revoque
 ├ 🚮 .purge 
 ├ 🤺 .kick
 ├ 🧘 .add
+├ 🗑 .delete ou del
 ├ ⚠️ .antipromote on/off
 ├ 🚷 .antirevoque on/off
 ├ 🙌 .welcome on
@@ -38,12 +40,10 @@ module.exports = {
       text: `
 ╭━━〔  𝗠𝗘𝗡𝗨 𝗢𝗪𝗡𝗘𝗥 〕━━⬣
 ├ 👑 .owner
-├ 🔧 .restart
-├ 🤖 .chatbot
 ├ ⚙️ .setting 
-├ 🔖 .allkaya 
 ├ 🎙 .recording on/off
 ├ 🖋 .typing on/off
+├ 📵  .blockinbox
 ├ 🚫 .block 
 ├ ✅ .unblock
 ├ 👑 .sudo
@@ -60,22 +60,22 @@ module.exports = {
 ╭━━〔  𝗦𝗧𝗜𝗖𝗞𝗘𝗥𝗦 𝗠𝗘𝗡𝗨 〕━━⬣
 ├ 🖼️ .sticker
 ├ ✍️ .take 
-├ 📂 .tgs
 ├ 📸 .photo 
 ╰────────────────────⬣`,
       contextInfo
     }, { quoted: m });
   },
 
+  
   '4': async (kaya, m) => {
     return kaya.sendMessage(m.chat, {
       text: `
-╭━━〔  𝗠É𝗗𝗜𝗔 𝗠𝗘𝗡𝗨 〕━━⬣
-├ 🎵 musique 
-├ ▶️ .play
-├ 🎞 .tiktok 
-├ 📽 .youtube
-├ 📰 .img
+╭━━〔  𝗗𝗜𝗩𝗘𝗥𝗦 𝗠𝗘𝗡𝗨 〕━━⬣
+├ ⏰ .alive 
+├ 🏓 .ping
+├ 📅 .calendrier 
+├ 🔎 .info
+├ 💡.repo
 ╰────────────────────⬣`,
       contextInfo
     }, { quoted: m });
@@ -84,11 +84,10 @@ module.exports = {
   '5': async (kaya, m) => {
     return kaya.sendMessage(m.chat, {
       text: `
-╭━━〔  𝗗𝗜𝗩𝗘𝗥𝗦 𝗠𝗘𝗡𝗨 〕━━⬣
-├ ⏰ .alive 
-├ 🏓 .ping
-├ 📅 .calendar
-├ 🔎 .info
+╭━━〔 📥 𝗧É𝗟É𝗖𝗛𝗔𝗥𝗚𝗘𝗠𝗘𝗡𝗧𝗦 〕━━⬣
+├ 🎵 .song 
+├ ▶️ .play
+├ 🎞 .tiktok 
 ╰────────────────────⬣`,
       contextInfo
     }, { quoted: m });
@@ -97,54 +96,20 @@ module.exports = {
   '6': async (kaya, m) => {
     return kaya.sendMessage(m.chat, {
       text: `
-╭━━〔 📥 𝗧É𝗟É𝗖𝗛𝗔𝗥𝗚𝗘𝗠𝗘𝗡𝗧𝗦 〕━━⬣
-├ 🎞️ .ytmp4
-├ 🎵 .ytmp3
-├ 📁 .mediafire
+╭━━〔  𝗜𝗔 & 𝗢𝗨𝗧𝗜𝗟𝗦 〕━━⬣
+├ 🤖 . ai
+├  🎤.voix
 ╰────────────────────⬣`,
       contextInfo
     }, { quoted: m });
   },
+
+  
+
 
   '7': async (kaya, m) => {
-    return kaya.sendMessage(m.chat, {
-      text: `
-╭━━〔  𝗜𝗔 & 𝗢𝗨𝗧𝗜𝗟𝗦 〕━━⬣
-├ 🤖 .gpt
-├ 🧠 .ia
-├ 📎 .shortlink
-╰────────────────────⬣`,
-      contextInfo
-    }, { quoted: m });
-  },
-
-  '8': async (kaya, m) => {
-    return kaya.sendMessage(m.chat, {
-      text: `
-╭━━〔 𝗔𝗣𝗣𝗥𝗘𝗡𝗧𝗜𝗦𝗦𝗔𝗚𝗘 〕━━⬣
-├ 🧑‍💻 .cours
-├ 💻 .python
-├ 📘 .tutoriel
-╰────────────────────⬣`,
-      contextInfo
-    }, { quoted: m });
-  },
-
-  '9': async (kaya, m) => {
-    return kaya.sendMessage(m.chat, {
-      text: `
-╭━━〔 𝗥É𝗦𝗘𝗔𝗨𝗫 𝗦𝗢𝗖𝗜𝗔𝗨𝗫 〕━━⬣
-├ 📷 .insta
-├ 🐦 .twitter
-├ 🎐 .fb
-╰────────────────────⬣`,
-      contextInfo
-    }, { quoted: m });
-  },
-
-  '10': async (kaya, m) => {
     const allMenus = `
-╭━━━〔 𝐓𝐎𝐔𝐒 𝐋𝐄𝐒 𝐌𝐄𝐍𝐔𝐒 - KAYA MD 〕━━⬣
+╭━━━〔 𝐓𝐎𝐔𝐒 𝐋𝐄𝐒 𝐌𝐄𝐍𝐔𝐒  〕━━⬣
 
 👥 *𝗚𝗥𝗢𝗨𝗣𝗘*
 ├ .tagall
@@ -152,6 +117,7 @@ module.exports = {
 ├ .lock
 ├ .unlock
 ├ .link
+├ .delete ou del
 ├ .antilink on
 ├ .antilink off
 ├ .promote
@@ -165,14 +131,12 @@ module.exports = {
 ├ .add
 👑 *𝗢𝗪𝗡𝗘𝗥*
 ├ .owner
-├ .restart
-├ .chatbot 
 ├ .settings
-├ .allkaya
 ├ .recording on
 ├ .recording off
 ├ .typing on
 ├ .typing off
+├ .blockinbox 
 ├ .block 
 ├ .unblock
 ├ .sudo 
@@ -182,47 +146,29 @@ module.exports = {
 🖼️ *𝗦𝗧𝗜𝗖𝗞𝗘𝗥𝗦*
 ├ .sticker
 ├ .take
-├ .tgs
 ├ .photo
 
-🎧 *𝗠É𝗗𝗜𝗔*
-├ .musique 
-├ .photo
-├ .play
-├ .tiktok
-├ .youtube
-├ .img
 
 🎲 *𝗗𝗜𝗩𝗘𝗥𝗦*
 ├ .alive
 ├ .ping
-├ .calendar
-├🔎info
+├ calendrier 
+├ .info
+├ .repo
 
 📥 *𝗧É𝗟É𝗖𝗛𝗔𝗥𝗚𝗘𝗠𝗘𝗡𝗧𝗦*
-├ .ytmp4
-├ .ytmp3
-├ .mediafire
+├ .song
+├ .play
+├ .tiktok
 
 🤖 *𝗜𝗔 & 𝗢𝗨𝗧𝗜𝗟𝗦*
-├ .gpt
-├ .ia
-├ .shortlink
-
-📚 *𝗔𝗣𝗣𝗥𝗘𝗡𝗧𝗜𝗦𝗦𝗔𝗚𝗘*
-├ .cours
-├ .python
-├ .tutoriel
-
-🌐 *𝗥É𝗦𝗘𝗔𝗨𝗫 𝗦𝗢𝗖𝗜𝗔𝗨𝗫*
-├ .insta
-├ .twitter
-├ .fb
+├ .ai
+├. voix
 
 ╰━━━━━━━━━━━━━━━━━━━━━━⬣`;
 
     await kaya.sendMessage(m.chat, {
-      image: { url: 'https://files.catbox.moe/e3g4cv.jpg' },
+      image: { url: 'https://files.catbox.moe/k06gcy.jpg' },
       caption: allMenus,
       contextInfo
     }, { quoted: m });
@@ -232,7 +178,7 @@ module.exports = {
     const text = (m.message?.conversation || m.message?.extendedTextMessage?.text || '').trim();
     if (/^\d+$/.test(text)) {
       return kaya.sendMessage(m.chat, {
-        text: '❌ Option invalide. Veuillez répondre par un chiffre (1 à 10).',
+        text: '❌ Option invalide. Veuillez répondre par un chiffre (1 à 7).',
         contextInfo
       }, { quoted: m });
     }
