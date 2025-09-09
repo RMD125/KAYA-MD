@@ -1,12 +1,4 @@
-const contextInfo = {
-  forwardingScore: 999,
-  isForwarded: true,
-  forwardedNewsletterMessageInfo: {
-    newsletterJid: '120363402565816662@newsletter',
-    newsletterName: 'KAYA MD',
-    serverMessageId: 122
-  }
-};
+const { contextInfo } = require('../utils/contextInfo'); // centralisé
 
 module.exports = {
   '1': async (kaya, m) => {
@@ -66,7 +58,6 @@ module.exports = {
     }, { quoted: m });
   },
 
-  
   '4': async (kaya, m) => {
     return kaya.sendMessage(m.chat, {
       text: `
@@ -98,18 +89,15 @@ module.exports = {
       text: `
 ╭━━〔  𝗜𝗔 & 𝗢𝗨𝗧𝗜𝗟𝗦 〕━━⬣
 ├ 🤖 . ai
-├  🎤.voix
+├ 🎤.voix
 ╰────────────────────⬣`,
       contextInfo
     }, { quoted: m });
   },
 
-  
-
-
   '7': async (kaya, m) => {
     const allMenus = `
-╭━━━〔 𝐓𝐎𝐔𝐒 𝐋𝐄𝐒 𝐌𝐄𝐍𝐔𝐒  〕━━⬣
+╭━━━〔 𝐓𝐎𝐔𝐒 𝐋𝐄𝐒 𝐌𝐄𝐍𝐔𝐒 〕━━⬣
 
 👥 *𝗚𝗥𝗢𝗨𝗣𝗘*
 ├ .tagall
@@ -148,7 +136,6 @@ module.exports = {
 ├ .take
 ├ .photo
 
-
 🎲 *𝗗𝗜𝗩𝗘𝗥𝗦*
 ├ .alive
 ├ .ping
@@ -163,7 +150,7 @@ module.exports = {
 
 🤖 *𝗜𝗔 & 𝗢𝗨𝗧𝗜𝗟𝗦*
 ├ .ai
-├. voix
+├ .voix
 
 ╰━━━━━━━━━━━━━━━━━━━━━━⬣`;
 
