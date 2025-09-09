@@ -23,7 +23,7 @@ module.exports = {
     }
 
     // Chargement de l’image du bot dynamique
-    let botImageUrl = 'https://files.catbox.moe/k06gcy.jpg'; // Image par défaut
+    let botImageUrl = 'https://files.catbox.moe/ya7puq.jpg'; // Image par défaut
     try {
       if (fs.existsSync(botImagePath)) {
         const data = JSON.parse(fs.readFileSync(botImagePath));
@@ -48,7 +48,8 @@ module.exports = {
 │ 🔹 7. Tous les menus
 │      
 ╰──────────────────╯
-📋 *Astuce :* Réponds au menu avec un chiffre (1 à 7) ou tape une commande directe comme : .groupemenu | .stickermenu | .iamenu
+📋 *Astuce :* Réponds au menu avec un chiffre (1 à 7) ou 
+               tape .groupemenu | stickermenu etc..
     `.trim();
 
     await kaya.sendMessage(
