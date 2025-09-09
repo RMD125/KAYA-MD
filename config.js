@@ -12,7 +12,7 @@ const defaultConfig = {
   restrict: false,
   botImage: "",
   LINKS: {
-    group: "https://chat.whatsapp.com/DoMh6jWjly2ErwVppmCGZo",
+    group: "https://chat.whatsapp.com/DZotf319LZy4D6Qxw5A0cn?mode=ac_t",
     chanel: "https://whatsapp.com/channel/0029Vb6FFPM002T3SKA6bb2D",
     telegram: "https://t.me/zonetech2"
   }
