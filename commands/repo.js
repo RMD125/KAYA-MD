@@ -9,7 +9,7 @@ module.exports = {
     const texte = `
 ╭━━────〔  SUPPORT  〕─────━━⬣
 ├ 
-🔗 GitHub Bot : https://github.com/Kaya2005/KAYA-MD
+🔗 GitHub Bot : https://github.com/kaya-md/KAYA-MD
 ├ 
 📺 Tutoriel Déploiement : https://youtube.com/@KAYATECH243
 ├
