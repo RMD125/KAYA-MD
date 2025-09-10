@@ -37,11 +37,10 @@ module.exports = {
       const members = metadata.participants.map(p => p.id);
       const message = m.quoted?.text || args.join(' ') || '_Aucun message fourni._';
 
-      // ✅ Message principal de tag envoyé AVEC contextInfo
+      // ✅ Message principal de tag envoyé SANS contextInfo
       await kaya.sendMessage(m.chat, {
         text: message,
-        mentions: members,
-        contextInfo
+        mentions: members
       }, { quoted: m });
 
     } catch (err) {
