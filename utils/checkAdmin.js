@@ -1,7 +1,8 @@
-const decodeJid = require('./decodeJid');
-const config = require('../config');
+// ==================== checkAdmin.js ====================
+import decodeJid from './decodeJid.js';
+import config from '../config.js';
 
-async function checkAdminOrOwner(Kaya, chatId, sender, participants = [], metadata = null) {
+export default async function checkAdminOrOwner(Kaya, chatId, sender, participants = [], metadata = null) {
     const isGroup = chatId.endsWith('@g.us');
     const senderNumber = decodeJid(sender).split('@')[0];
     const botOwners = config.OWNER_NUMBER.split(',').map(o => o.trim());
@@ -60,5 +61,3 @@ async function checkAdminOrOwner(Kaya, chatId, sender, participants = [], metada
         participant
     };
 }
-
-module.exports = checkAdminOrOwner;
