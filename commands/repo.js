@@ -1,15 +1,16 @@
-const { contextInfo } = require('../utils/contextInfo'); // import centralisé
+// ================= commands/repo.js =================
+import { contextInfo } from '../utils/contextInfo.js';
 
-module.exports = {
+export default {
   name: 'repo',
   description: '🔧 Envoie les liens GitHub, YouTube et groupe WhatsApp de support',
-  category: 'apprentissage',
+  category: 'Apprentissage',
 
   run: async (kaya, m) => {
     const texte = `
 ╭━━────〔  SUPPORT  〕─────━━⬣
 ├ 
-🔗 GitHub Bot : https://github.com/kaya-md/KAYA-MD
+🔗 GitHub Bot : https://github.com/Kaya2005/KAYA-MD
 ├ 
 📺 Tutoriel Déploiement : https://youtube.com/@KAYATECH243
 ├
@@ -19,9 +20,10 @@ module.exports = {
 N’hésite pas à poser tes questions et à suivre les tutoriels !
     `;
 
-    await kaya.sendMessage(m.chat, {
-      text: texte,
-      contextInfo
-    }, { quoted: m });
+    await kaya.sendMessage(
+      m.chat,
+      { text: texte, contextInfo },
+      { quoted: m }
+    );
   }
 };

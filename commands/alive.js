@@ -1,28 +1,51 @@
-const { contextInfo } = require('../utils/contextInfo'); // ← import global contextInfo
+// commands/ai.js
+import axios from "axios";
 
-module.exports = {
-  name: 'alive',
-  description: 'Montre que le bot est en ligne',
-  category: 'Info',
+export default {
+  name: "ai",
+  description: "Discute avec l’IA (GPT-3 via stablediffusion.fr)",
+  category: "Outils",
+  group: false,
+  admin: false,
 
-  run: async (kaya, m) => {
-    const uptime = process.uptime(); // en secondes
-    const hours = Math.floor(uptime / 3600);
-    const minutes = Math.floor((uptime % 3600) / 60);
-    const seconds = Math.floor(uptime % 60);
+  run: async (kaya, m, msg, store, args) => {
+    try {
+      if (!args || args.length === 0) {
+        return kaya.sendMessage(
+          m.chat,
+          { text: "❌ Utilisation : .ai <votre question>" },
+          { quoted: m }
+        );
+      }
 
-    const message = `╭─「 𝗞𝗔𝗬𝗔-𝗠𝗗 」─⬣
-│ ✅ *J'suis 𝗞𝗔𝗬𝗔-𝗠𝗗*
-│ ⏱️ *Et j'suis en vie depuis :* ${hours}h ${minutes}m ${seconds}s
-╰───────────────⬣`;
+      const prompt = args.join(" ");
 
-    await kaya.sendMessage(
-      m.chat,
-      {
-        text: message,
-        contextInfo // ← utilisation du contextInfo global
-      },
-      { quoted: m }
-    );
+      // Requête API
+      const response = await axios.post(
+        "https://stablediffusion.fr/gpt3/predict",
+        { prompt },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "Referer": "https://stablediffusion.fr/chatgpt3",
+            "Origin": "https://stablediffusion.fr",
+            "User-Agent": "Mozilla/5.0"
+          }
+        }
+      );
+
+      // ✅ Récupère uniquement le message de l’IA
+      const reply = response.data?.message || "❌ Aucune réponse reçue.";
+
+      await kaya.sendMessage(m.chat, { text: reply }, { quoted: m });
+
+    } catch (err) {
+      console.error("Erreur commande AI :", err);
+      await kaya.sendMessage(
+        m.chat,
+        { text: "❌ Erreur lors de la requête à l’IA." },
+        { quoted: m }
+      );
+    }
   }
 };

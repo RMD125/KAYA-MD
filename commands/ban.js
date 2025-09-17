@@ -1,9 +1,10 @@
-const fs = require("fs");
-const path = require("path");
-const checkAdminOrOwner = require("../utils/checkAdmin");
-const { contextInfo } = require("../utils/contextInfo"); // ← import global
+// ==================== commands/ban.js ====================
+import fs from "fs";
+import path from "path";
+import checkAdminOrOwner from "../utils/checkAdmin.js";
+import { contextInfo } from "../utils/contextInfo.js";
 
-const banFile = path.join(__dirname, "../data/ban.json");
+const banFile = path.join("./data/ban.json");
 
 // Charger la liste des bannis
 let bannedUsers = [];
@@ -18,14 +19,13 @@ function saveBanned() {
   fs.writeFileSync(banFile, JSON.stringify(bannedUsers, null, 2));
 }
 
-module.exports = {
+export default {
   name: "ban",
-  description: "Bannir un utilisateur du bot",
+  description: "🚫 Bannir un utilisateur du bot (Owner uniquement)",
   category: "Owner",
 
   run: async (kaya, m, msg, store, args) => {
     try {
-      // ✅ Vérifie si le sender est owner
       const permissions = await checkAdminOrOwner(kaya, m.chat, m.sender);
       if (!permissions.isOwner) {
         return kaya.sendMessage(
@@ -35,21 +35,18 @@ module.exports = {
         );
       }
 
-      // Récupération du numéro cible (reply / mention / argument)
+      // Récupération du numéro cible
       let target = m.quoted?.sender?.split("@")[0];
-
       if (!target) {
-        if (msg.message?.extendedTextMessage?.contextInfo?.mentionedJid?.length) {
-          target = msg.message.extendedTextMessage.contextInfo.mentionedJid[0].split("@")[0];
-        } else if (args[0]) {
-          target = args[0].replace(/\D/g, "");
-        }
+        const mentioned = msg.message?.extendedTextMessage?.contextInfo?.mentionedJid;
+        if (mentioned?.length) target = mentioned[0].split("@")[0];
+        else if (args[0]) target = args[0].replace(/\D/g, "");
       }
 
       if (!target) {
         return kaya.sendMessage(
           m.chat,
-          { text: "❌ Indique le numéro à bannir (ou reply au message).", contextInfo },
+          { text: "❌ Indique le numéro à bannir (reply ou mention).", contextInfo },
           { quoted: m }
         );
       }
@@ -62,7 +59,6 @@ module.exports = {
         );
       }
 
-      // Ajouter l'utilisateur à la liste
       bannedUsers.push(target);
       saveBanned();
 

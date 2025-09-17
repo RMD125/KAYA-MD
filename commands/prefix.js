@@ -1,17 +1,17 @@
-const checkAdminOrOwner = require('../utils/checkAdmin');
-const config = require('../config');
+// ================= commands/prefix.js =================
+import checkAdminOrOwner from "../utils/checkAdmin.js";
+import config from '../config.js';
 
-module.exports = {
+export default {
   name: 'prefix',
   description: '🔑 Change le préfixe du bot (owner uniquement)',
   category: 'Owner',
 
-  run: async (Kaya, m, msg, store, args) => {
+  run: async (kaya, m, msg, store, args) => {
     try {
-      // ✅ Vérifie si le sender est owner
-      const permissions = await checkAdminOrOwner(Kaya, m.chat, m.sender);
+      const permissions = await checkAdminOrOwner(kaya, m.chat, m.sender);
       if (!permissions.isOwner) {
-        return Kaya.sendMessage(
+        return kaya.sendMessage(
           m.chat,
           { text: '🚫 Cette commande est réservée au propriétaire du bot.' },
           { quoted: m }
@@ -20,27 +20,25 @@ module.exports = {
 
       const newPrefix = args[0];
       if (!newPrefix) {
-        return Kaya.sendMessage(
+        return kaya.sendMessage(
           m.chat,
           { text: `❌ Utilisation : ${config.PREFIX}prefix <nouveau préfixe>` },
           { quoted: m }
         );
       }
 
-      // Met à jour en mémoire
       config.PREFIX = newPrefix;
 
-      // Sauvegarde dans config.json
       if (config.saveConfig) config.saveConfig({ PREFIX: newPrefix });
 
-      return Kaya.sendMessage(
+      return kaya.sendMessage(
         m.chat,
         { text: `✅ Préfixe changé avec succès !\nNouveau : \`${newPrefix}\`` },
         { quoted: m }
       );
     } catch (err) {
       console.error('❌ Erreur commande prefix :', err);
-      return Kaya.sendMessage(
+      return kaya.sendMessage(
         m.chat,
         { text: '⚠️ Impossible de changer le préfixe pour le moment.' },
         { quoted: m }

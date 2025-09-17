@@ -1,8 +1,9 @@
-const checkAdminOrOwner = require('../utils/checkAdmin'); 
-const config = require('../config');
-const { contextInfo } = require('../utils/contextInfo'); // import centralisé
+// ==================== commands/settings.js ====================
+import checkAdminOrOwner from '../utils/checkAdmin.js';
+import config from '../config.js';
+import { contextInfo } from '../utils/contextInfo.js';
 
-module.exports = {
+export default {
   name: 'settings',
   description: 'Voir et modifier les paramètres du bot',
   category: 'Owner',

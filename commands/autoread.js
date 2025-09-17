@@ -1,28 +1,53 @@
 // ==================== commands/autoread.js ====================
-const config = require("../config");
+import config from "../config.js";
+import { contextInfo } from "../utils/contextInfo.js"; // ← cohérence avec tes autres commandes
 
-module.exports = {
+export default {
   name: "autoread",
-  description: "Activer ou désactiver la lecture automatique des messages",
+  description: "📖 Active/Désactive la lecture automatique des messages",
   category: "Owner",
 
   run: async (kaya, m, msg, store, args) => {
-    const senderNumber = m.sender.split("@")[0];
+    try {
+      const senderNumber = m.sender.split("@")[0];
 
-    if (senderNumber !== config.OWNER_NUMBER) {
-      return kaya.sendMessage(m.chat, { text: "🚫 Cette commande est réservée au propriétaire du bot." }, { quoted: m });
+      if (senderNumber !== config.OWNER_NUMBER) {
+        return kaya.sendMessage(
+          m.chat,
+          { text: "🚫 Cette commande est réservée au *propriétaire du bot*.", contextInfo },
+          { quoted: m }
+        );
+      }
+
+      const action = args[0]?.toLowerCase();
+      if (!["on", "off"].includes(action)) {
+        return kaya.sendMessage(
+          m.chat,
+          { text: "⚙️ Usage : `.autoread on` ou `.autoread off`", contextInfo },
+          { quoted: m }
+        );
+      }
+
+      config.saveConfig({ autoRead: action === "on" });
+
+      return kaya.sendMessage(
+        m.chat,
+        {
+          text:
+            action === "on"
+              ? "📖 *AutoRead activé* : les messages seront marqués comme lus automatiquement."
+              : "❌ *AutoRead désactivé* : les messages ne seront plus marqués automatiquement.",
+          contextInfo,
+        },
+        { quoted: m }
+      );
+    } catch (err) {
+      console.error("Erreur autoread.js :", err);
+      return kaya.sendMessage(
+        m.chat,
+        { text: "❌ Une erreur est survenue lors du changement du mode AutoRead.", contextInfo },
+        { quoted: m }
+      );
     }
-
-    if (!args[0]) {
-      return kaya.sendMessage(m.chat, { text: `❌ Indique "on" ou "off" pour activer ou désactiver autoread.` }, { quoted: m });
-    }
-
-    const value = args[0].toLowerCase();
-    if (!["on", "off"].includes(value)) {
-      return kaya.sendMessage(m.chat, { text: `❌ Valeur invalide. Utilise "on" ou "off".` }, { quoted: m });
-    }
-
-    config.saveConfig({ autoRead: value === "on" });
-    return kaya.sendMessage(m.chat, { text: `✅ AutoRead ${value === "on" ? "activé" : "désactivé"} !` }, { quoted: m });
-  }
+  },
 };

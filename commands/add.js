@@ -1,8 +1,9 @@
-const checkAdminOrOwner = require('../utils/checkAdmin');
-const decodeJid = require('../utils/decodeJid');
-const { contextInfo } = require('../utils/contextInfo'); 
+// commands/add.js
+import checkAdminOrOwner from '../utils/checkAdmin.js';
+import decodeJid from '../utils/decodeJid.js';
+import { contextInfo } from '../utils/contextInfo.js';
 
-module.exports = {
+export default {
   name: 'add',
   description: '➕ Ajouter un membre au groupe (Admins/Owner uniquement, silencieux)',
   category: 'Groupe',

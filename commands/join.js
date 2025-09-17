@@ -1,13 +1,14 @@
-const config = require('../config');
-const checkAdminOrOwner = require('../utils/checkAdmin'); // ton utilitaire
+// ================= commands/join.js =================
+import config from '../config.js';
+import checkAdminOrOwner from '../utils/checkAdmin.js';
 
-module.exports = {
-  name: 'join',
-  description: 'Le bot rejoint un groupe via un lien (owner uniquement, silencieux)',
-  category: 'Owner',
+export const name = 'join';
+export const description = 'Le bot rejoint un groupe via un lien (owner uniquement, silencieux)';
+export const category = 'Owner';
 
-  run: async (kaya, m, msg, store, args) => {
-    // ✅ Vérifie si l'utilisateur est owner (pas besoin du chatId ici)
+export async function run(kaya, m, msg, store, args) {
+  try {
+    // ✅ Vérifie si l'utilisateur est owner
     const permissions = await checkAdminOrOwner(kaya, null, m.sender);
     if (!permissions.isOwner) return; // Ignore si pas owner
 
@@ -18,17 +19,18 @@ module.exports = {
 
     // Priorité au reply, sinon prendre l'argument
     const link = replyText || args[0];
-    if (!link || !link.includes('whatsapp.com/invite/')) return; // Ignore si pas de lien
+    if (!link || !link.includes('whatsapp.com/invite/')) return; // Ignore si pas de lien valide
 
     // Extraire le code d’invitation
     const code = link.split('whatsapp.com/invite/')[1].trim().replace(/[^a-zA-Z0-9]/g, '');
+    if (!code) return; // Ignore si code invalide
 
-    try {
-      await kaya.groupAcceptInvite(code);
-      // ✅ Silencieux : pas de message envoyé
-      console.log(`✅ Le bot a rejoint un groupe via le lien de ${m.sender.split('@')[0]}`);
-    } catch (e) {
-      console.error('❌ Erreur JOIN :', e);
-    }
+    // ✅ Rejoindre le groupe silencieusement
+    await kaya.groupAcceptInvite(code);
+
+    // Optionnel : log console pour info
+    console.log(`✅ Le bot a rejoint un groupe via le lien de ${m.sender.split('@')[0]}`);
+  } catch (err) {
+    console.error('❌ Erreur commande join.js :', err);
   }
-};
+}

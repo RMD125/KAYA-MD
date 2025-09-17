@@ -1,7 +1,8 @@
-const checkAdminOrOwner = require('../utils/checkAdmin');
-const { contextInfo } = require('../utils/contextInfo'); // import centralisé
+// ================= commands/promote.js =================
+import checkAdminOrOwner from "../utils/checkAdmin.js";
+import { contextInfo } from '../utils/contextInfo.js';
 
-module.exports = {
+export default {
   name: 'promote',
   description: '👑 Promouvoir un membre du groupe en admin',
   category: 'Groupe',
@@ -18,7 +19,6 @@ module.exports = {
       );
     }
 
-    // ✅ Vérifie si l’auteur est admin ou owner
     const permissions = await checkAdminOrOwner(kaya, m.chat, m.sender);
     permissions.isAdminOrOwner = permissions.isAdmin || permissions.isOwner;
 
@@ -30,7 +30,6 @@ module.exports = {
       );
     }
 
-    // Récupération de la cible
     let target;
     if (msg.message?.extendedTextMessage?.contextInfo?.mentionedJid?.length) {
       target = msg.message.extendedTextMessage.contextInfo.mentionedJid[0];
@@ -51,15 +50,11 @@ module.exports = {
 
       await kaya.sendMessage(
         m.chat,
-        {
-          text: `✅ @${target.split('@')[0]} est maintenant admin !`,
-          mentions: [target],
-          contextInfo
-        },
+        { text: `✅ @${target.split('@')[0]} est maintenant admin !`, mentions: [target], contextInfo },
         { quoted: m }
       );
     } catch (err) {
-      console.error('Erreur promote:', err);
+      console.error('❌ Erreur promote :', err);
       return kaya.sendMessage(
         m.chat,
         { text: `❌ Impossible de promouvoir ce membre.\nDétails : ${err.message}`, contextInfo },

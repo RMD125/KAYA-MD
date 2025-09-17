@@ -1,4 +1,6 @@
-const axios = require('axios');
+// ==================== commands/traduc.js ====================
+import axios from 'axios';
+import { contextInfo } from '../utils/contextInfo.js'; // import centralisé
 
 const languages = {
   fr: 'français',
@@ -32,7 +34,7 @@ const languages = {
   he: 'hébreu'
 };
 
-module.exports = {
+export default {
   name: 'traduc',
   description: 'Traduit un message en une langue spécifique',
   category: 'Utilitaires',
@@ -47,45 +49,66 @@ module.exports = {
           .map(([key, name]) => `│ ➜ *${key}* : ${name}`)
           .join('\n');
 
-        return kaya.sendMessage(m.chat, {
-          text: `╭─「 🌍 *Langues disponibles - KAYA-MD* 」─⬣\n${listLang}\n╰──────────────⬣\n📌 *Utilise :* .traduc fr (réponds à un message)`
-        }, { quoted: m });
+        return kaya.sendMessage(
+          m.chat,
+          {
+            text: `╭─「 🌍 *Langues disponibles - KAYA-MD* 」─⬣\n${listLang}\n╰──────────────⬣\n📌 *Utilise :* .traduc fr (réponds à un message)`,
+            contextInfo
+          },
+          { quoted: m }
+        );
       }
 
       if (!quotedText) {
-        return kaya.sendMessage(m.chat, {
-          text: `╭─「 🌍 *Traduction KAYA-MD* 」─⬣\n│ ❌ Réponds à un message à traduire.\n╰──────────────⬣`
-        }, { quoted: m });
+        return kaya.sendMessage(
+          m.chat,
+          {
+            text: `╭─「 🌍 *Traduction KAYA-MD* 」─⬣\n│ ❌ Réponds à un message à traduire.\n╰──────────────⬣`,
+            contextInfo
+          },
+          { quoted: m }
+        );
       }
 
       const prompt = `Traduis ce message en ${languages[code]} : ${quotedText}`;
-      const response = await axios.post('https://stablediffusion.fr/gpt3/predict', {
-        prompt
-      }, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Referer': 'https://stablediffusion.fr/chatgpt3',
-          'Origin': 'https://stablediffusion.fr',
-          'User-Agent': 'Mozilla/5.0'
+      const response = await axios.post(
+        'https://stablediffusion.fr/gpt3/predict',
+        { prompt },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Referer': 'https://stablediffusion.fr/chatgpt3',
+            'Origin': 'https://stablediffusion.fr',
+            'User-Agent': 'Mozilla/5.0'
+          }
         }
-      });
+      );
 
       const result = response.data.message;
       if (!result) {
-        return kaya.sendMessage(m.chat, {
-          text: `╭─「 🌍 *Traduction  KAYA-MD* 」─⬣\n│ ❌ Traduction indisponible\n╰──────────────⬣`
-        }, { quoted: m });
+        return kaya.sendMessage(
+          m.chat,
+          {
+            text: `╭─「 🌍 *Traduction KAYA-MD* 」─⬣\n│ ❌ Traduction indisponible\n╰──────────────⬣`,
+            contextInfo
+          },
+          { quoted: m }
+        );
       }
 
-      await kaya.sendMessage(m.chat, {
-        text: result
-      }, { quoted: m });
+      // ✅ Message traduit envoyé SANS contextInfo
+      await kaya.sendMessage(m.chat, { text: result }, { quoted: m });
 
     } catch (err) {
       console.error(err);
-      return kaya.sendMessage(m.chat, {
-        text: `╭─「 🌍 *Traduction  KAYA-MD* 」─⬣\n│ ❌ Une erreur est survenue : ${err.message}\n╰──────────────⬣`
-      }, { quoted: m });
+      return kaya.sendMessage(
+        m.chat,
+        {
+          text: `╭─「 🌍 *Traduction KAYA-MD* 」─⬣\n│ ❌ Une erreur est survenue : ${err.message}\n╰──────────────⬣`,
+          contextInfo
+        },
+        { quoted: m }
+      );
     }
   }
 };

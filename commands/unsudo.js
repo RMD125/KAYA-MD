@@ -1,8 +1,9 @@
-const config = require('../config');
-const checkAdminOrOwner = require('../utils/checkAdmin');
-const { contextInfo } = require('../utils/contextInfo'); // import centralisé
+// ==================== commands/unsudo.js ====================
+import config from '../config.js';
+import checkAdminOrOwner from '../utils/checkAdmin.js'; 
+import { contextInfo } from '../utils/contextInfo.js'; // import centralisé
 
-module.exports = {
+export default {
   name: 'unsudo',
   description: '➖ Retire un owner existant (réservé au propriétaire principal)',
   category: 'Owner',

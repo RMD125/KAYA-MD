@@ -1,20 +1,27 @@
-const { contextInfo } = require('../utils/contextInfo');
+// ================= commands/owner.js =================
+import { contextInfo } from '../utils/contextInfo.js';
 
-module.exports = {
-  name: 'owner',
-  description: '📞 Affiche le numéro du créateur du bot',
-  category: 'Info',
+export const name = 'owner';
+export const description = '📞 Affiche le numéro du créateur du bot';
+export const category = 'Info';
 
-  run: async (kaya, m, msg, store, args) => {
-    try {
-      const creatorNumber = '243XXXXXXXXX'; // ton numéro
-      await kaya.sendMessage(m.chat, {
+export async function run(kaya, m, msg, store, args) {
+  try {
+    const creatorNumber = '243XXXXXXXXX'; // Remplace par ton numéro
+    await kaya.sendMessage(
+      m.chat,
+      {
         text: `📞 *Numéro du créateur* : wa.me/${creatorNumber}`,
         contextInfo
-      }, { quoted: m });
-    } catch (err) {
-      console.error('❌ Erreur commande owner :', err);
-      await kaya.sendMessage(m.chat, { text: '⚠️ Impossible d’envoyer le numéro.', contextInfo }, { quoted: m });
-    }
+      },
+      { quoted: m }
+    );
+  } catch (err) {
+    console.error('❌ Erreur commande owner :', err);
+    await kaya.sendMessage(
+      m.chat,
+      { text: '⚠️ Impossible d’envoyer le numéro.', contextInfo },
+      { quoted: m }
+    );
   }
-};
+}

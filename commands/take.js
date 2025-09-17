@@ -1,6 +1,7 @@
-const { downloadContentFromMessage } = require('@whiskeysockets/baileys');
-const { Sticker, StickerTypes } = require('wa-sticker-formatter');
-const { contextInfo } = require('../utils/contextInfo'); // import centralisé
+// ==================== commands/take.js ====================
+import { downloadContentFromMessage } from '@whiskeysockets/baileys';
+import { Sticker, StickerTypes } from 'wa-sticker-formatter';
+import { contextInfo } from '../utils/contextInfo.js';
 
 // Util: convertir stream -> buffer
 async function streamToBuffer(stream) {
@@ -9,7 +10,7 @@ async function streamToBuffer(stream) {
   return Buffer.concat(chunks);
 }
 
-module.exports = {
+export default {
   name: 'take',
   description: 'Reprend un sticker/image/vidéo et met l’auteur = pseudo de la personne',
   category: 'Stickers',
@@ -24,10 +25,11 @@ module.exports = {
       const targetMsg = quoted || current;
 
       if (!targetMsg) {
-        return kaya.sendMessage(m.chat, { 
-          text: '❌ Réponds à un sticker/image/vidéo avec `.take`',
-          contextInfo 
-        }, { quoted: m });
+        return kaya.sendMessage(
+          m.chat,
+          { text: '❌ Réponds à un sticker/image/vidéo avec `.take`', contextInfo },
+          { quoted: m }
+        );
       }
 
       // Détecte type
@@ -35,10 +37,11 @@ module.exports = {
       const node = targetMsg[type];
 
       if (!['stickerMessage', 'imageMessage', 'videoMessage'].includes(type)) {
-        return kaya.sendMessage(m.chat, { 
-          text: '❌ Réponds à un sticker/image/vidéo valide.',
-          contextInfo 
-        }, { quoted: m });
+        return kaya.sendMessage(
+          m.chat,
+          { text: '❌ Réponds à un sticker/image/vidéo valide.', contextInfo },
+          { quoted: m }
+        );
       }
 
       // Télécharge le média
@@ -50,7 +53,11 @@ module.exports = {
       const buffer = await streamToBuffer(stream);
 
       if (!buffer || buffer.length < 100) {
-        return kaya.sendMessage(m.chat, { text: '❌ Impossible de lire ce média.', contextInfo }, { quoted: m });
+        return kaya.sendMessage(
+          m.chat,
+          { text: '❌ Impossible de lire ce média.', contextInfo },
+          { quoted: m }
+        );
       }
 
       // Crée le sticker (sans packname, author = pseudo)
@@ -67,10 +74,11 @@ module.exports = {
 
     } catch (err) {
       console.error("Take error:", err);
-      return kaya.sendMessage(m.chat, { 
-        text: "❌ Erreur lors de la création du sticker.",
-        contextInfo 
-      }, { quoted: m });
+      return kaya.sendMessage(
+        m.chat,
+        { text: "❌ Erreur lors de la création du sticker.", contextInfo },
+        { quoted: m }
+      );
     }
   }
 };

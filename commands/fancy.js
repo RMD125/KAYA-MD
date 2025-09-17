@@ -1,5 +1,5 @@
 // ================= commands/fancy.js =================
-const { contextInfo } = require('../utils/contextInfo'); // ✅ Import global
+import { contextInfo } from '../utils/contextInfo.js'; // ✅ Import global
 
 function convertStyle(text, type) {
   const styles = {
@@ -72,16 +72,15 @@ function getStyleExamples() {
   return stylesList;
 }
 
-module.exports = {
-  name: 'fancy',
-  description: '🎨 Transforme le texte avec un style fancy. Usage: .fancy <style> <texte>',
+export const name = 'fancy';
+export const description = '🎨 Transforme le texte avec un style fancy. Usage: .fancy <style> <texte>';
 
-  run: async (kaya, m, msg, store, args) => {
-    if (args.length < 2 || isNaN(args[0])) {
-      const styles = getStyleExamples();
+export async function run(kaya, m, msg, store, args) {
+  if (args.length < 2 || isNaN(args[0])) {
+    const styles = getStyleExamples();
 
-      return kaya.sendMessage(m.chat, {
-        text:
+    return kaya.sendMessage(m.chat, {
+      text:
 `🎨 *FANCY - KAYA MD*
 
 📌 *Utilisation :*
@@ -94,15 +93,14 @@ module.exports = {
 📑 *Styles disponibles :*
 
 ${styles}`,
-        contextInfo // ✅ utilise l’import centralisé
-      }, { quoted: m });
-    }
-
-    const style = parseInt(args[0]);
-    const content = args.slice(1).join(" ");
-    const fancyText = convertStyle(content, style);
-
-    // ✅ Envoi final
-    return kaya.sendMessage(m.chat, { text: fancyText }, { quoted: m });
+      contextInfo
+    }, { quoted: m });
   }
-};
+
+  const style = parseInt(args[0]);
+  const content = args.slice(1).join(" ");
+  const fancyText = convertStyle(content, style);
+
+  // ✅ Envoi final
+  return kaya.sendMessage(m.chat, { text: fancyText }, { quoted: m });
+}

@@ -1,136 +1,127 @@
-const fs = require("fs");
-const path = require("path");
-const checkAdminOrOwner = require("../utils/checkAdmin");
-const { contextInfo } = require("../utils/contextInfo"); // ← import contextInfo global
+import fs from "fs";
+import path from "path";
+import checkAdminOrOwner from "../utils/checkAdmin.js";
+import { contextInfo } from "../utils/contextInfo.js"; // import contextInfo global
 
-const antispamFile = path.join(__dirname, "../data/antiSpamGroups.json");
+const antiSpamFile = path.join(process.cwd(), "data/antiSpamGroups.json");
 
-// Charger les groupes anti-spam
 function loadAntiSpamGroups() {
-    if (!fs.existsSync(antispamFile)) return new Set();
-    try {
-        const groups = JSON.parse(fs.readFileSync(antispamFile, "utf-8"));
-        return new Set(groups);
-    } catch {
-        return new Set();
-    }
+  if (!fs.existsSync(antiSpamFile)) return new Set();
+  try {
+    const groups = JSON.parse(fs.readFileSync(antiSpamFile, "utf-8"));
+    return new Set(groups);
+  } catch {
+    return new Set();
+  }
 }
 
-// Sauvegarder les groupes anti-spam
 function saveAntiSpamGroups(groups) {
-    fs.writeFileSync(antispamFile, JSON.stringify([...groups], null, 4));
+  fs.writeFileSync(antiSpamFile, JSON.stringify([...groups], null, 2));
 }
 
-// Initialisation globale
-if (!global.antiSpamGroups) {
-    global.antiSpamGroups = loadAntiSpamGroups();
-}
+if (!global.antiSpamGroups) global.antiSpamGroups = loadAntiSpamGroups();
 
-// Stockage en mémoire des messages récents par utilisateur
-const userMessages = new Map();
+// state in-memory
+const userMessages = new Map(); // sender => [{ timestamp, key }]
+const lastKick = new Map();     // sender => timestamp of last kick handled
 
-module.exports = {
-    name: "antispam",
-    description: "Active ou désactive l'anti-spam dans un groupe",
-    category: "Groupe",
-    group: true,
-    admin: true,
+const SPAM_LIMIT = 7;       // nombre de messages pour considérer spam
+const TIME_FRAME = 10_000;  // fenêtre temporelle en ms (10s)
+const DELETE_LAST = 20;     // nombre max de messages à supprimer
 
-    run: async (kaya, m, msg, store, args) => {
-        const chatId = m.chat;
-        const action = args[0]?.toLowerCase();
+export default {
+  name: "antispam",
+  description: "Active ou désactive l’anti-spam dans un groupe",
+  category: "Groupe",
+  group: true,
+  admin: true,
+  botAdmin: true,
 
-        const permissions = await checkAdminOrOwner(kaya, chatId, m.sender);
-        if (!permissions.isAdminOrOwner) {
-            return kaya.sendMessage(
-                chatId,
-                { text: "🚫 Seuls les *Admins* ou le *Propriétaire* peuvent activer/désactiver l’anti-spam.", contextInfo },
-                { quoted: m }
-            );
-        }
+  run: async (kaya, m, msg, store, args) => {
+    try {
+      const chatId = m.chat;
+      const action = args[0]?.toLowerCase();
 
-        if (!action || !["on", "off"].includes(action)) {
-            return kaya.sendMessage(
-                chatId,
-                { text: "⚙️ Usage: `.antispam on` ou `.antispam off`", contextInfo },
-                { quoted: m }
-            );
-        }
+      if (!m.isGroup) {
+        return kaya.sendMessage(chatId, { text: "❌ Cette commande fonctionne uniquement dans un groupe.", contextInfo }, { quoted: m });
+      }
 
-        const antispamGroups = new Set(global.antiSpamGroups);
+      const permissions = await checkAdminOrOwner(kaya, chatId, m.sender);
+      if (!permissions.isAdmin && !permissions.isOwner) {
+        return kaya.sendMessage(chatId, { text: "🚫 Seuls les *Admins* ou le *Propriétaire* peuvent activer/désactiver l’anti-spam.", contextInfo }, { quoted: m });
+      }
 
-        if (action === "on") {
-            if (!antispamGroups.has(chatId)) antispamGroups.add(chatId);
-            global.antiSpamGroups = antispamGroups;
-            saveAntiSpamGroups(antispamGroups);
+      if (!action || !["on", "off"].includes(action)) {
+        return kaya.sendMessage(chatId, {
+          text: "⚙️ Anti-spam : activez ou désactivez\n- .antispam on\n- .antispam off"
+        }, { quoted: m });
+      }
 
-            return kaya.sendMessage(
-                chatId,
-                { text: "✅ *Anti-spam activé* dans ce groupe.\nUn utilisateur sera kick après *7 messages* (texte ou médias) envoyés en 10s.", contextInfo },
-                { quoted: m }
-            );
-        } else {
-            if (antispamGroups.has(chatId)) antispamGroups.delete(chatId);
-            global.antiSpamGroups = antispamGroups;
-            saveAntiSpamGroups(antispamGroups);
+      const antiSpamGroups = new Set(global.antiSpamGroups);
 
-            return kaya.sendMessage(
-                chatId,
-                { text: "❌ *Anti-spam désactivé* dans ce groupe.", contextInfo },
-                { quoted: m }
-            );
-        }
-    },
+      if (action === "on") {
+        antiSpamGroups.add(chatId);
+        global.antiSpamGroups = antiSpamGroups;
+        saveAntiSpamGroups(antiSpamGroups);
+        return kaya.sendMessage(chatId, { text: `✅ *Anti-spam activé*\n- ${SPAM_LIMIT}+ msgs en ${TIME_FRAME/1000}s = kick 🚫`, contextInfo }, { quoted: m });
+      } else {
+        antiSpamGroups.delete(chatId);
+        global.antiSpamGroups = antiSpamGroups;
+        saveAntiSpamGroups(antiSpamGroups);
+        return kaya.sendMessage(chatId, { text: "❌ *Anti-spam désactivé* pour ce groupe.", contextInfo }, { quoted: m });
+      }
 
-    // 📌 Détection automatique
-    detect: async (kaya, m) => {
-        const chatId = m.chat;
-        const sender = m.sender;
-
-        if (!global.antiSpamGroups || !global.antiSpamGroups.has(chatId)) return;
-
-        if (!userMessages.has(sender)) userMessages.set(sender, []);
-
-        const now = Date.now();
-        const records = userMessages
-            .get(sender)
-            .filter(r => now - r.timestamp < 10000); // 10 secondes
-
-        // 🔎 Vérifie si le message est texte ou média
-        const isText = !!m.message?.conversation || !!m.message?.extendedTextMessage;
-        const isMedia =
-            !!m.message?.imageMessage ||
-            !!m.message?.videoMessage ||
-            !!m.message?.documentMessage ||
-            !!m.message?.stickerMessage ||
-            !!m.message?.audioMessage;
-
-        if (isText || isMedia) {
-            records.push({ timestamp: now, key: m.key });
-            userMessages.set(sender, records);
-        }
-
-        // 🚨 Si spam détecté (>=7 messages en 10s)
-        if (records.length >= 7) {
-            try {
-                // Supprimer tous ses messages récents
-                for (const r of records) {
-                    if (r.key) await kaya.sendMessage(chatId, { delete: r.key });
-                }
-
-                // Expulser le spammeur
-                await kaya.groupParticipantsUpdate(chatId, [sender], "remove");
-
-                await kaya.sendMessage(chatId, {
-                    text: `@${sender.split("@")[0]} a été expulsé pour *SPAM* 🚫`,
-                    mentions: [sender],
-                    contextInfo
-                });
-
-                userMessages.delete(sender); // reset
-            } catch (err) {
-                console.error("❌ Erreur anti-spam:", err);
-            }
-        }
+    } catch (err) {
+      console.error("Erreur antispam.js (run):", err);
     }
+  },
+
+  detect: async (kaya, m) => {
+    try {
+      const chatId = m.chat;
+      const sender = m.sender;
+      if (!global.antiSpamGroups || !global.antiSpamGroups.has(chatId)) return;
+
+      // Ignore messages du bot lui-même
+      if (m.key?.fromMe) return;
+
+      // Assure la structure
+      if (!userMessages.has(sender)) userMessages.set(sender, []);
+
+      const now = Date.now();
+      let records = (userMessages.get(sender) || []).filter(r => now - r.timestamp < TIME_FRAME);
+
+      if (m.key && m.key.id) {
+        records.push({ timestamp: now, key: m.key });
+      }
+
+      userMessages.set(sender, records);
+
+      if (records.length >= SPAM_LIMIT) {
+        const last = lastKick.get(sender) || 0;
+        if (Date.now() - last < 10_000) return;
+
+        lastKick.set(sender, Date.now());
+
+        const toDelete = records.slice(-DELETE_LAST);
+        for (const r of toDelete) {
+          try { await kaya.sendMessage(chatId, { delete: r.key }); } catch {}
+        }
+
+        try { await kaya.groupParticipantsUpdate(chatId, [sender], "remove"); } catch {}
+
+        try {
+          await kaya.sendMessage(chatId, {
+            text: `🚫 *@${sender.split("@")[0]}* expulsé pour *SPAM* (${SPAM_LIMIT}+ msgs en ${Math.round(TIME_FRAME/1000)}s).`,
+            mentions: [sender],
+            contextInfo
+          });
+        } catch (err) { console.error(err); }
+
+        userMessages.delete(sender);
+      }
+    } catch (err) {
+      console.error("Erreur anti-spam detect:", err);
+    }
+  }
 };

@@ -1,73 +1,62 @@
-// ==================== sudo.js ====================
-const config = require('../config');
-const checkAdminOrOwner = require('../utils/checkAdmin'); 
-const { contextInfo } = require('../utils/contextInfo'); // import centralisé
+// ==================== commands/sudo.js ====================
+import config from '../config.js';
+import checkAdminOrOwner from '../utils/checkAdmin.js';
+import { contextInfo } from '../utils/contextInfo.js';
 
-module.exports = {
-    name: 'sudo',
-    description: '➕ Ajoute un nouvel owner (réservé au propriétaire principal)',
-    category: 'Owner',
+export default {
+  name: 'sudo',
+  description: '➕ Ajoute un nouvel owner (réservé au propriétaire principal)',
+  category: 'Owner',
 
-    run: async (kaya, m, msg, store, args) => {
-        // ✅ Vérifie si le sender est owner
-        const permissions = await checkAdminOrOwner(kaya, m.chat, m.sender);
-        if (!permissions.isOwner) {
-            return kaya.sendMessage(
-                m.chat,
-                { text: '🚫 *Seul le propriétaire principal peut utiliser cette commande.*', contextInfo },
-                { quoted: m }
-            );
-        }
+  run: async (kaya, m, msg, store, args) => {
+    const permissions = await checkAdminOrOwner(kaya, m.chat, m.sender);
+    if (!permissions.isOwner) {
+      return kaya.sendMessage(
+        m.chat,
+        { text: '🚫 *Seul le propriétaire principal peut utiliser cette commande.*', contextInfo },
+        { quoted: m }
+      );
+    }
 
-        // Récupération du numéro cible
-        let targetId;
-        if (m.quoted?.sender) {
-            targetId = m.quoted.sender.split('@')[0].replace(/\D/g, '').trim();
-        } else if (args[0]) {
-            targetId = args[0].replace(/\D/g, '').trim();
-        } else {
-            return kaya.sendMessage(
-                m.chat,
-                { text: '❌ *Fournis un numéro ou réponds à un message pour ajouter comme owner.*', contextInfo },
-                { quoted: m }
-            );
-        }
+    let targetId;
+    if (m.quoted?.sender) {
+      targetId = m.quoted.sender.split('@')[0].replace(/\D/g, '').trim();
+    } else if (args[0]) {
+      targetId = args[0].replace(/\D/g, '').trim();
+    } else {
+      return kaya.sendMessage(
+        m.chat,
+        { text: '❌ *Fournis un numéro ou réponds à un message pour ajouter comme owner.*', contextInfo },
+        { quoted: m }
+      );
+    }
 
-        // Liste des owners actuels
-        let owners = config.OWNER_NUMBER.split(',')
-            .map(o => o.split('@')[0].replace(/\D/g, '').trim());
+    let owners = config.OWNER_NUMBER.split(',')
+      .map(o => o.split('@')[0].replace(/\D/g, '').trim());
 
-        // Vérifie si le numéro est déjà owner
-        if (owners.includes(targetId)) {
-            return kaya.sendMessage(
-                m.chat,
-                { 
-                    text: `ℹ️ *@${targetId}* est déjà owner.`,
-                    mentions: [targetId + '@s.whatsapp.net'],
-                    contextInfo 
-                },
-                { quoted: m }
-            );
-        }
+    if (owners.includes(targetId)) {
+      return kaya.sendMessage(
+        m.chat,
+        { text: `ℹ️ *@${targetId}* est déjà owner.`, mentions: [targetId + '@s.whatsapp.net'], contextInfo },
+        { quoted: m }
+      );
+    }
 
-        // Ajoute le nouvel owner sans écraser les anciens
-        owners.push(targetId);
+    owners.push(targetId);
+    config.saveConfig({ OWNER_NUMBER: owners.join(',') });
 
-        // Sauvegarde dans config.json et met à jour config.js
-        config.saveConfig({ OWNER_NUMBER: owners.join(',') });
-
-        await kaya.sendMessage(
-            m.chat,
-            {
-                text: `╭━━〔 👑 AJOUT OWNER 〕━━⬣
+    await kaya.sendMessage(
+      m.chat,
+      {
+        text: `╭━━〔 👑 AJOUT OWNER 〕━━⬣
 ├ 📲 Numéro : @${targetId}
 ├ ✅ Statut : *Ajouté comme OWNER avec succès !*
 ├ 🔐 Accès : *Total au bot KAYA-MD*
 ╰────────────────────⬣`,
-                mentions: [targetId + '@s.whatsapp.net'],
-                contextInfo
-            },
-            { quoted: m }
-        );
-    }
+        mentions: [targetId + '@s.whatsapp.net'],
+        contextInfo
+      },
+      { quoted: m }
+    );
+  }
 };

@@ -1,13 +1,16 @@
-const { contextInfo } = require('../utils/contextInfo'); // <-- import centralisé
+// ================= commands/ping.js =================
+import { contextInfo } from '../utils/contextInfo.js'; // import centralisé
 
-module.exports = {
-  name: 'ping',
-  description: 'Vérifie la latence et le statut du bot',
-  run: async (kaya, m) => {
+export const name = 'ping';
+export const description = '🏓 Vérifie la latence et le statut du bot';
+export const category = 'Info';
+
+export async function run(kaya, m) {
+  try {
     const start = Date.now();
 
     // Message temporaire
-    const sentMsg = await kaya.sendMessage(
+    await kaya.sendMessage(
       m.chat,
       { text: '⏳ Calcul de la latence...' },
       { quoted: m }
@@ -16,25 +19,28 @@ module.exports = {
     const end = Date.now();
     const latency = end - start;
 
-    const formattedResponse = `
-🏓 *PONG !*
-
-✅ Statut : *KAYA-MD* est actif et prêt à vous aider !
-⏱️ Latence : *${latency} ms*
-⚡ Performance : *Ultra rapide* ⚡
+    const response = `
+╭───〔 🏓 PONG 〕───╮
+│ ✅ Statut : *KAYA-MD* actif et prêt !
+│ ⏱️ Latence : *${latency} ms*
+│ ⚡ Performance : *Ultra rapide* ⚡
+╰───────────────────╯
     `.trim();
 
-    // Message final avec contextInfo centralisé
     await kaya.sendMessage(
       m.chat,
       {
-        text: formattedResponse,
-        contextInfo: {
-          ...contextInfo,
-          mentionedJid: [m.sender]
-        }
+        text: response,
+        contextInfo: { ...contextInfo, mentionedJid: [m.sender] }
       },
       { quoted: m }
     );
+  } catch (err) {
+    console.error('❌ Erreur ping.js :', err);
+    await kaya.sendMessage(
+      m.chat,
+      { text: '⚠️ Impossible de calculer la latence.', contextInfo },
+      { quoted: m }
+    );
   }
-};
+}

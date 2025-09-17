@@ -1,6 +1,7 @@
-const axios = require("axios");
+// commands/ai.js
+import axios from "axios";
 
-module.exports = {
+export default {
   name: "ai",
   description: "Discute avec l’IA (GPT-3 via stablediffusion.fr)",
   category: "Outils",

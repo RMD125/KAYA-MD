@@ -1,11 +1,11 @@
-const fs = require('fs');
-const path = require('path');
-const config = require('../config');
-const checkAdminOrOwner = require('../utils/checkAdmin');
-const decodeJid = require('../utils/decodeJid');
-const { contextInfo } = require('../utils/contextInfo'); // centralisation
+import fs from 'fs';
+import path from 'path';
+import config from '../config.js';
+import checkAdminOrOwner from '../utils/checkAdmin.js';
+import decodeJid from '../utils/decodeJid.js';
+import { contextInfo } from '../utils/contextInfo.js';
 
-const welcomeFile = path.join(__dirname, '../data/welcome.json');
+const welcomeFile = path.join(process.cwd(), 'data', 'welcome.json');
 let welcomeData = {};
 
 // Charger ou créer le fichier welcome.json
@@ -13,21 +13,24 @@ try {
   welcomeData = JSON.parse(fs.readFileSync(welcomeFile, 'utf-8'));
 } catch {
   welcomeData = {};
-  fs.writeFileSync(welcomeFile, '{}');
+  fs.writeFileSync(welcomeFile, JSON.stringify({}, null, 2));
 }
 
 function saveWelcomeData() {
   fs.writeFileSync(welcomeFile, JSON.stringify(welcomeData, null, 2));
 }
 
-module.exports = {
+export default {
   name: 'welcome',
   description: 'Active ou désactive le message de bienvenue dans les groupes',
 
   run: async (kaya, m, msg, store, args, { isGroup }) => {
     try {
-      if (!isGroup)
-        return kaya.sendMessage(m.chat, { text: '❌ Cette commande fonctionne uniquement dans un groupe.', contextInfo }, { quoted: msg });
+      if (!isGroup) return kaya.sendMessage(
+        m.chat, 
+        { text: '❌ Cette commande fonctionne uniquement dans un groupe.', contextInfo },
+        { quoted: msg }
+      );
 
       const chatId = decodeJid(m.chat);
       const sender = decodeJid(m.sender);
@@ -35,26 +38,24 @@ module.exports = {
       const permissions = await checkAdminOrOwner(kaya, chatId, sender);
       permissions.isAdminOrOwner = permissions.isAdmin || permissions.isOwner;
 
-      if (!permissions.isAdminOrOwner)
-        return kaya.sendMessage(
-          chatId,
-          { text: '🚫 Accès refusé : Seuls les admins ou owners peuvent utiliser cette commande.', contextInfo },
-          { quoted: msg }
-        );
+      if (!permissions.isAdminOrOwner) return kaya.sendMessage(
+        chatId, 
+        { text: '🚫 Accès refusé : Seuls les admins ou owners peuvent utiliser cette commande.', contextInfo },
+        { quoted: msg }
+      );
+
+      const groupPP = await kaya.profilePictureUrl(chatId, 'image').catch(() => 'https://i.imgur.com/3XjWdoI.png');
 
       let subCmd = args[0]?.toLowerCase() || '';
       if (!subCmd && m.body.toLowerCase().startsWith('.welcome')) {
         subCmd = m.body.toLowerCase().replace('.welcome', '').trim();
       }
 
-      // Photo du groupe
-      const groupPP = await kaya.profilePictureUrl(chatId, 'image').catch(() => 'https://i.imgur.com/3XjWdoI.png');
-
       if (subCmd === 'on' || subCmd === '1') {
         welcomeData[chatId] = true;
         saveWelcomeData();
         return kaya.sendMessage(chatId, { 
-          image: { url: groupPP }, 
+          image: { url: groupPP },
           caption: '✅ *WELCOME ACTIVÉ* pour ce groupe !',
           contextInfo
         }, { quoted: msg });
@@ -64,22 +65,24 @@ module.exports = {
         delete welcomeData[chatId];
         saveWelcomeData();
         return kaya.sendMessage(chatId, { 
-          image: { url: groupPP }, 
+          image: { url: groupPP },
           caption: '❌ *WELCOME DÉSACTIVÉ* pour ce groupe.',
           contextInfo
         }, { quoted: msg });
       }
 
-      // Activation/Désactivation globale (owner uniquement)
       if (subCmd === 'all') {
-        if (!permissions.isOwner)
-          return kaya.sendMessage(chatId, { text: '❌ Seul le propriétaire peut activer/désactiver pour tous les groupes.', contextInfo }, { quoted: msg });
+        if (!permissions.isOwner) return kaya.sendMessage(
+          chatId, 
+          { text: '❌ Seul le propriétaire peut activer/désactiver pour tous les groupes.', contextInfo },
+          { quoted: msg }
+        );
 
         if (args[1]?.toLowerCase() === 'off') {
           delete welcomeData.global;
           saveWelcomeData();
           return kaya.sendMessage(chatId, { 
-            image: { url: groupPP }, 
+            image: { url: groupPP },
             caption: '❌ *WELCOME DÉSACTIVÉ* pour tous les groupes 🌍',
             contextInfo
           }, { quoted: msg });
@@ -87,7 +90,7 @@ module.exports = {
           welcomeData.global = true;
           saveWelcomeData();
           return kaya.sendMessage(chatId, { 
-            image: { url: groupPP }, 
+            image: { url: groupPP },
             caption: '✅ *WELCOME ACTIVÉ* pour tous les groupes 🌍',
             contextInfo
           }, { quoted: msg });
@@ -106,7 +109,7 @@ module.exports = {
   },
 
   participantUpdate: async (kaya, update) => {
-    const chatId = decodeJid(update.id); // <-- Correction ici
+    const chatId = decodeJid(update.id);
     const { participants, action } = update;
 
     if (action !== 'add' || (!welcomeData.global && !welcomeData[chatId])) return;

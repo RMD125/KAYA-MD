@@ -1,14 +1,15 @@
-const fs = require("fs");
-const path = require("path");
-const checkAdminOrOwner = require("../utils/checkAdmin");
-const { contextInfo } = require("../utils/contextInfo"); // centralisation
+// ==================== commands/unban.js ====================
+import fs from 'fs';
+import path from 'path';
+import checkAdminOrOwner from '../utils/checkAdmin.js'; 
+import { contextInfo } from '../utils/contextInfo.js'; // centralisation
 
-const banFile = path.join(__dirname, "../data/ban.json");
+const banFile = path.join(process.cwd(), 'data/ban.json');
 
 // Charger la liste des bannis
 let bannedUsers = [];
 if (fs.existsSync(banFile)) {
-  bannedUsers = JSON.parse(fs.readFileSync(banFile, "utf-8"));
+  bannedUsers = JSON.parse(fs.readFileSync(banFile, 'utf-8'));
 } else {
   fs.writeFileSync(banFile, JSON.stringify(bannedUsers, null, 2));
 }
@@ -18,10 +19,10 @@ function saveBanned() {
   fs.writeFileSync(banFile, JSON.stringify(bannedUsers, null, 2));
 }
 
-module.exports = {
-  name: "unban",
-  description: "Débannir un utilisateur du bot",
-  category: "Owner",
+export default {
+  name: 'unban',
+  description: 'Débannir un utilisateur du bot',
+  category: 'Owner',
 
   run: async (kaya, m, msg, store, args) => {
     try {
@@ -30,26 +31,26 @@ module.exports = {
       if (!permissions.isOwner) {
         return kaya.sendMessage(
           m.chat,
-          { text: "🚫 Cette commande est réservée au propriétaire du bot.", contextInfo },
+          { text: '🚫 Cette commande est réservée au propriétaire du bot.', contextInfo },
           { quoted: m }
         );
       }
 
       // Récupération du numéro cible (reply / mention / argument)
-      let target = m.quoted?.sender?.split("@")[0];
+      let target = m.quoted?.sender?.split('@')[0];
 
       if (!target) {
         if (msg.message?.extendedTextMessage?.contextInfo?.mentionedJid?.length) {
-          target = msg.message.extendedTextMessage.contextInfo.mentionedJid[0].split("@")[0];
+          target = msg.message.extendedTextMessage.contextInfo.mentionedJid[0].split('@')[0];
         } else if (args[0]) {
-          target = args[0].replace(/\D/g, "");
+          target = args[0].replace(/\D/g, '');
         }
       }
 
       if (!target) {
         return kaya.sendMessage(
           m.chat,
-          { text: "❌ Indique le numéro à débannir (ou reply au message).", contextInfo },
+          { text: '❌ Indique le numéro à débannir (ou reply au message).', contextInfo },
           { quoted: m }
         );
       }
@@ -82,10 +83,10 @@ module.exports = {
       );
 
     } catch (err) {
-      console.error("Erreur unban.js :", err);
+      console.error('Erreur unban.js :', err);
       return kaya.sendMessage(
         m.chat,
-        { text: "❌ Impossible de débannir l'utilisateur.", contextInfo },
+        { text: '❌ Impossible de débannir l\'utilisateur.', contextInfo },
         { quoted: m }
       );
     }

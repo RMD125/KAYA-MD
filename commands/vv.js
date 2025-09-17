@@ -1,13 +1,15 @@
-const { downloadContentFromMessage } = require('@whiskeysockets/baileys');
+// ==================== commands/vv.js ====================
+import { downloadContentFromMessage } from '@whiskeysockets/baileys';
+import { contextInfo } from '../utils/contextInfo.js'; // import centralisé
 
-// Util: stream -> buffer
+// Util : convertir stream -> buffer
 async function streamToBuffer(stream) {
   const chunks = [];
   for await (const chunk of stream) chunks.push(chunk);
   return Buffer.concat(chunks);
 }
 
-module.exports = {
+export default {
   name: 'vv',
   description: 'Convertit une photo vue unique en photo normale',
   category: 'Utils',
@@ -22,12 +24,12 @@ module.exports = {
       if (!targetMsg) {
         return kaya.sendMessage(
           m.chat,
-          { text: '⚠️ Réponds à une *photo vue unique* avec `.vv`' },
+          { text: '⚠️ Réponds à une *photo vue unique* avec `.vv`', contextInfo },
           { quoted: m }
         );
       }
 
-      // 🔹 Détection viewOnce (multi-versions)
+      // 🔹 Détection viewOnce
       if (targetMsg.viewOnceMessageV2) {
         targetMsg = targetMsg.viewOnceMessageV2.message;
       } else if (targetMsg.viewOnceMessageV2Extension) {
@@ -40,7 +42,7 @@ module.exports = {
       if (!targetMsg.imageMessage) {
         return kaya.sendMessage(
           m.chat,
-          { text: '⚠️ Ce n’est pas une *photo vue unique* valide.' },
+          { text: '⚠️ Ce n’est pas une *photo vue unique* valide.', contextInfo },
           { quoted: m }
         );
       }
@@ -54,7 +56,7 @@ module.exports = {
       if (!buffer || buffer.length < 100) {
         return kaya.sendMessage(
           m.chat,
-          { text: '❌ Impossible de lire cette image.' },
+          { text: '❌ Impossible de lire cette image.', contextInfo },
           { quoted: m }
         );
       }
@@ -65,7 +67,7 @@ module.exports = {
       // 🔹 Envoie comme photo normale
       await kaya.sendMessage(
         m.chat,
-        { image: buffer, caption },
+        { image: buffer, caption, contextInfo },
         { quoted: m }
       );
 
@@ -73,7 +75,7 @@ module.exports = {
       console.error('❌ Erreur commande vv:', err);
       await kaya.sendMessage(
         m.chat,
-        { text: '❌ Erreur lors de la conversion de la photo.' },
+        { text: '❌ Erreur lors de la conversion de la photo.', contextInfo },
         { quoted: m }
       );
     }

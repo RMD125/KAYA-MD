@@ -1,10 +1,11 @@
-const axios = require('axios');
-const FormData = require('form-data');
-const { downloadContentFromMessage } = require('@whiskeysockets/baileys');
-const { Readable } = require('stream');
-const { contextInfo } = require('../utils/contextInfo'); // import centralisé
+// ==================== commands/url.js ====================
+import axios from 'axios';
+import FormData from 'form-data';
+import { downloadContentFromMessage } from '@whiskeysockets/baileys';
+import { Readable } from 'stream';
+import { contextInfo } from '../utils/contextInfo.js'; // import centralisé
 
-module.exports = {
+export default {
   name: 'url',
   description: '🔗 Génère un lien Catbox à partir d’une image',
   run: async (kaya, m) => {

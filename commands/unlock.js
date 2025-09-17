@@ -1,7 +1,8 @@
-const checkAdminOrOwner = require('../utils/checkAdmin');
-const { contextInfo } = require('../utils/contextInfo'); // import centralisé
+// ==================== commands/unlock.js ====================
+import checkAdminOrOwner from '../utils/checkAdmin.js'; 
+import { contextInfo } from '../utils/contextInfo.js'; // import centralisé
 
-module.exports = {
+export default {
   name: 'unlock',
   description: 'Ouvre le groupe (tout le monde peut écrire).',
   group: true,

@@ -1,9 +1,10 @@
-const fs = require("fs");
-const path = require("path");
-const checkAdminOrOwner = require("../utils/checkAdmin");
-const { contextInfo } = require("../utils/contextInfo"); // ← import contextInfo global
+// commands/antidemote.js
+import fs from "fs";
+import path from "path";
+import checkAdminOrOwner from "../utils/checkAdmin.js";
+import { contextInfo } from "../utils/contextInfo.js";
 
-const antiDemoteFile = path.join(__dirname, "../data/antidemote.json");
+const antiDemoteFile = path.join(process.cwd(), "data/antidemote.json");
 
 // Charger ou créer le fichier
 let antiDemoteData = {};
@@ -21,7 +22,7 @@ function saveAntiDemote() {
 // Set pour éviter les boucles
 const processing = new Set();
 
-module.exports = {
+export default {
   name: "antidemote",
   description: "🚫 Empêche de retirer les admins (re-nomme automatiquement)",
   category: "Groupe",
@@ -42,7 +43,8 @@ module.exports = {
         );
       }
 
-      if (!args[0] || !["on", "off"].includes(args[0].toLowerCase())) {
+      const action = args[0]?.toLowerCase();
+      if (!action || !["on", "off"].includes(action)) {
         return kaya.sendMessage(
           m.chat,
           { text: "❌ Utilisation : .antidemote on / off", contextInfo },
@@ -50,12 +52,12 @@ module.exports = {
         );
       }
 
-      if (args[0].toLowerCase() === "on") {
+      if (action === "on") {
         antiDemoteData[m.chat] = true;
         saveAntiDemote();
         return kaya.sendMessage(
           m.chat,
-          { text: "✅ *AntiDemote activé* : les admins seront automatiquement renommés si on les retire.", contextInfo },
+          { text: "✅ *AntiDemote activé* : les admins seront automatiquement re-promus si on les retire.", contextInfo },
           { quoted: m }
         );
       } else {
@@ -75,13 +77,12 @@ module.exports = {
   participantUpdate: async (kaya, update) => {
     try {
       const { id: chatId, participants, action, byBot } = update;
-
       if (!antiDemoteData[chatId]) return;
       if (action !== "demote") return;
       if (byBot) return; // Ignore les actions générées par le bot
 
       for (const user of participants) {
-        if (processing.has(user)) continue; // Ignorer si déjà traité
+        if (processing.has(user)) continue;
 
         processing.add(user);
         try {

@@ -1,64 +1,60 @@
-const config = require('../config');
-const checkAdminOrOwner = require('../utils/checkAdmin'); 
-const { contextInfo } = require('../utils/contextInfo'); // ✅ Import centralisé
+// ==================== commands/botmode.js ====================
+import config from "../config.js";
+import checkAdminOrOwner from "../utils/checkAdmin.js";
+import { contextInfo } from "../utils/contextInfo.js"; // ✅ Import centralisé
 
-module.exports = {
-  name: 'botmode',
-  description: 'Changer le mode du bot : public ou privé',
-  category: 'Owner',
+export default {
+  name: "botmode",
+  description: "Changer le mode du bot : public ou privé",
+  category: "Owner",
 
-  run: async (kaya, m, msg, store, args) => {
+  run: async (kaya, m, msg, store, args, command) => {
     // ✅ Vérifie les permissions
     const permissions = await checkAdminOrOwner(kaya, m.chat, m.sender);
     if (!permissions.isOwner) {
       return kaya.sendMessage(
         m.chat,
-        { text: '🚫 Cette commande est réservée au propriétaire du bot.', contextInfo },
+        { text: "🚫 Cette commande est réservée au propriétaire du bot.", contextInfo },
         { quoted: m }
       );
     }
 
-    if (!args[0]) {
+    // ✅ Autoriser .public on|off et .private on|off directement
+    const cmd = command.toLowerCase(); // "public" ou "private"
+    const value = args[0]?.toLowerCase();
+
+    if (!["public", "private"].includes(cmd)) {
       return kaya.sendMessage(
         m.chat,
-        { text: `❌ Indique le mode :\n.public on|off\n.private on|off`, contextInfo },
+        { text: "❌ Commande inconnue. Utilise `.public on|off` ou `.private on|off`.", contextInfo },
         { quoted: m }
       );
     }
 
-    const cmd = args[0].toLowerCase();
-    const value = args[1]?.toLowerCase();
-
-    if (!['on', 'off'].includes(value)) {
+    if (!["on", "off"].includes(value)) {
       return kaya.sendMessage(
         m.chat,
-        { text: '❌ Valeur invalide. Utilise on ou off.', contextInfo },
+        { text: "❌ Valeur invalide. Utilise on ou off.", contextInfo },
         { quoted: m }
       );
     }
 
-    if (cmd === 'public') {
-      config.saveUserConfig({ publicBot: value === 'on' });
+    if (cmd === "public") {
+      config.saveUserConfig({ publicBot: value === "on" });
       return kaya.sendMessage(
         m.chat,
-        { text: `✅ Mode public du bot : ${value === 'on' ? 'activé' : 'désactivé'}`, contextInfo },
+        { text: `✅ Mode public du bot : ${value === "on" ? "activé" : "désactivé"}`, contextInfo },
         { quoted: m }
       );
     }
 
-    if (cmd === 'private') {
-      config.saveUserConfig({ publicBot: value !== 'on' }); // private = !public
+    if (cmd === "private") {
+      config.saveUserConfig({ publicBot: value !== "on" }); // private = !public
       return kaya.sendMessage(
         m.chat,
-        { text: `✅ Mode privé du bot : ${value === 'on' ? 'activé' : 'désactivé'}`, contextInfo },
+        { text: `✅ Mode privé du bot : ${value === "on" ? "activé" : "désactivé"}`, contextInfo },
         { quoted: m }
       );
     }
-
-    return kaya.sendMessage(
-      m.chat,
-      { text: '❌ Commande inconnue. Utilise .public ou .private.', contextInfo },
-      { quoted: m }
-    );
   }
 };
