@@ -1,10 +1,15 @@
 // ==================== config.js ====================
-const fs = require("fs");
-const path = require("path");
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+// ESM __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const defaultConfig = {
-  SESSION_ID: "",
-  OWNER_NUMBER: "",
+  SESSION_ID: "kaya~jQF3EYKQ#mBrOA-uo_I0NQnl-VL9mV4bsMgieUIDhnDJYi4D_x_k",
+  OWNER_NUMBER: "243993621718",
   PREFIX: ".",
   TIMEZONE: "Africa/Kinshasa",
   publicBot: true, // true = public, false = privé par défaut
@@ -12,7 +17,7 @@ const defaultConfig = {
   restrict: false,
   botImage: "",
   LINKS: {
-    group: "https://chat.whatsapp.com/DZotf319LZy4D6Qxw5A0cn?mode=ac_t",
+    group: "https://chat.whatsapp.com/DoMh6jWjly2ErwVppmCGZo",
     chanel: "https://whatsapp.com/channel/0029Vb6FFPM002T3SKA6bb2D",
     telegram: "https://t.me/zonetech2"
   }
@@ -21,6 +26,7 @@ const defaultConfig = {
 // 📂 chemin vers ./data/config.json
 const dataDir = path.join(__dirname, "data");
 if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+
 const configPath = path.join(dataDir, "config.json");
 
 // Crée config.json si inexistant
@@ -30,22 +36,14 @@ if (!fs.existsSync(configPath)) {
 }
 
 // Charge config.json
-let userConfig = JSON.parse(fs.readFileSync(configPath));
+let userConfig = JSON.parse(fs.readFileSync(configPath, "utf-8"));
 
 // Fonction pour sauvegarder après modification
-function saveConfig(updatedConfig) {
+export function saveConfig(updatedConfig) {
   userConfig = { ...userConfig, ...updatedConfig };
   fs.writeFileSync(configPath, JSON.stringify(userConfig, null, 2));
   console.log("✅ Configuration sauvegardée avec succès.");
-
-  // Mettre à jour les propriétés exportées en mémoire
-  Object.keys(updatedConfig).forEach(key => {
-    module.exports[key] = userConfig[key];
-  });
 }
 
-// Export
-module.exports = {
-  ...userConfig,
-  saveConfig
-};
+// Export de la config complète
+export default userConfig;
