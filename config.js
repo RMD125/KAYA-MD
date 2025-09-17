@@ -8,8 +8,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const defaultConfig = {
-  SESSION_ID: "kaya~jQF3EYKQ#mBrOA-uo_I0NQnl-VL9mV4bsMgieUIDhnDJYi4D_x_k",
-  OWNER_NUMBER: "243993621718",
+  SESSION_ID: "",
+  OWNER_NUMBER: "",
   PREFIX: ".",
   TIMEZONE: "Africa/Kinshasa",
   publicBot: true, // true = public, false = privé par défaut
