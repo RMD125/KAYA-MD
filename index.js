@@ -16,8 +16,7 @@ import antiPromoteCmd from './commands/antipromote.js';
 import antiDemoteCmd from './commands/antidemote.js';
 import antilinkCmd from './commands/antilink.js';
 import antispamCmd from './commands/antispam.js';
-import makeWASocket, { jidDecode, useMultiFileAuthState } from '@whiskeysockets/baileys';
-
+import makeWASocket, { jidDecode, useMultiFileAuthState } from '@whiskeysockets/baileys/lib/index.js';
 // ==================== ESM __dirname ====================
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
