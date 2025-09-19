@@ -129,7 +129,7 @@ export default {
         const groupSize = metadata.participants.length;
         const creationDate = new Date(metadata.creation * 1000).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' });
 
-        const welcomeText = `╭━━〔 WELCOME 𝗞𝗔𝗬𝗔-𝗠𝗗 〕━━⬣
+        const welcomeText = `╭━━〔 WELCOME  〕━━⬣
 ├ 👤 Bienvenue ${username}
 ├ 🎓 Groupe: *${groupName}*
 ├ 👥 Membres : ${groupSize}

@@ -2,30 +2,30 @@ import fs from "fs";
 import path from "path";
 import checkAdminOrOwner from "../utils/checkAdmin.js";
 
-const antiLinkFile = path.join(process.cwd(), "data/antiLinkGroups.json");
+const spamFile = path.join(process.cwd(), "data/antiSpamGroups.json");
 
 // Charger depuis fichier
-function loadAntiLinkGroups() {
-  if (!fs.existsSync(antiLinkFile)) return {};
+function loadAntiSpamGroups() {
+  if (!fs.existsSync(spamFile)) return {};
   try {
-    return JSON.parse(fs.readFileSync(antiLinkFile, "utf-8"));
+    return JSON.parse(fs.readFileSync(spamFile, "utf-8"));
   } catch {
     return {};
   }
 }
 
 // Sauvegarde
-function saveAntiLinkGroups(groups) {
-  fs.writeFileSync(antiLinkFile, JSON.stringify(groups, null, 2));
+function saveAntiSpamGroups(groups) {
+  fs.writeFileSync(spamFile, JSON.stringify(groups, null, 2));
 }
 
 // Initialisation globale
-if (!global.antiLinkGroups) global.antiLinkGroups = loadAntiLinkGroups();
-if (!global.userWarns) global.userWarns = {};
+if (!global.antiSpamGroups) global.antiSpamGroups = loadAntiSpamGroups();
+if (!global.userSpam) global.userSpam = {};
 
 export default {
-  name: "antilink",
-  description: "Anti-link sans mode par défaut",
+  name: "antispam",
+  description: "Anti-spam configurable",
   category: "Groupe",
   group: true,
   admin: true,
@@ -33,56 +33,43 @@ export default {
 
   run: async (kaya, m, msg, store, args) => {
     try {
-      if (!m.isGroup) {
-        return kaya.sendMessage(m.chat, { text: "❌ Cette commande fonctionne uniquement dans un groupe." }, { quoted: m });
-      }
+      if (!m.isGroup) return kaya.sendMessage(m.chat, { text: "❌ Cette commande fonctionne uniquement dans un groupe." }, { quoted: m });
 
-      const sender = m.sender;
       const chatId = m.chat;
+      const sender = m.sender;
       const action = args[0]?.toLowerCase();
 
-      // Si pas d'action ou action invalide, afficher le menu texte
-      if (!action || !["on", "off", "delete", "warn", "kick"].includes(action)) {
-        return kaya.sendMessage(
-          chatId,
-          {
-            text: `⚙️ Mode :\n- .antilink on\n- .antilink off\n- .antilink delete\n- .antilink warn\n- .antilink kick`
-          },
-          { quoted: m }
-        );
+      if (!action || !["on","off","warn","kick","delete"].includes(action)) {
+        return kaya.sendMessage(chatId, { text: "⚙️ Modes :\n- .antispam on\n- .antispam off\n- .antispam warn\n- .antispam kick\n- .antispam delete" }, { quoted: m });
       }
 
       // Vérification admin/owner
       const check = await checkAdminOrOwner(kaya, chatId, sender);
-      if (!check.isAdminOrOwner) {
-        return kaya.sendMessage(chatId, { text: "🚫 Seuls les *Admins* ou le *Propriétaire* peuvent changer le mode anti-link." }, { quoted: m });
-      }
+      if (!check.isAdminOrOwner) return kaya.sendMessage(chatId, { text: "🚫 Seuls les admins ou le propriétaire peuvent modifier le mode anti-spam." }, { quoted: m });
 
-      // Actions
       if (action === "on") {
-        // Active le groupe mais sans mode par défaut
-        if (!global.antiLinkGroups[chatId]) global.antiLinkGroups[chatId] = { enabled: true };
-        global.antiLinkGroups[chatId].enabled = true;
-        saveAntiLinkGroups(global.antiLinkGroups);
-        return kaya.sendMessage(chatId, { text: "✅ *Anti-link activé !*\nVeuillez choisir le mode : delete / warn / kick" }, { quoted: m });
+        if (!global.antiSpamGroups[chatId]) global.antiSpamGroups[chatId] = { enabled: true };
+        global.antiSpamGroups[chatId].enabled = true;
+        saveAntiSpamGroups(global.antiSpamGroups);
+        return kaya.sendMessage(chatId, { text: "✅ Anti-spam activé ! Veuillez choisir le mode : warn / kick / delete" }, { quoted: m });
       }
 
       if (action === "off") {
-        delete global.antiLinkGroups[chatId];
-        saveAntiLinkGroups(global.antiLinkGroups);
-        return kaya.sendMessage(chatId, { text: "❌ *Anti-link désactivé* pour ce groupe." }, { quoted: m });
+        delete global.antiSpamGroups[chatId];
+        saveAntiSpamGroups(global.antiSpamGroups);
+        return kaya.sendMessage(chatId, { text: "❌ Anti-spam désactivé pour ce groupe." }, { quoted: m });
       }
 
-      if (["delete", "warn", "kick"].includes(action)) {
-        if (!global.antiLinkGroups[chatId]) global.antiLinkGroups[chatId] = { enabled: true };
-        global.antiLinkGroups[chatId].mode = action;
-        saveAntiLinkGroups(global.antiLinkGroups);
-        return kaya.sendMessage(chatId, { text: `✅ Mode *${action.toUpperCase()}* activé pour l’anti-link.` }, { quoted: m });
+      if (["warn","kick","delete"].includes(action)) {
+        if (!global.antiSpamGroups[chatId]) global.antiSpamGroups[chatId] = { enabled: true };
+        global.antiSpamGroups[chatId].mode = action;
+        saveAntiSpamGroups(global.antiSpamGroups);
+        return kaya.sendMessage(chatId, { text: `✅ Mode *${action.toUpperCase()}* activé pour l'anti-spam.` }, { quoted: m });
       }
 
     } catch (err) {
-      console.error("Erreur antilink.js :", err);
-      return kaya.sendMessage(m.chat, { text: "❌ Impossible de modifier l’anti-link." }, { quoted: m });
+      console.error("Erreur antispam.js :", err);
+      return kaya.sendMessage(m.chat, { text: "❌ Impossible de modifier l’anti-spam." }, { quoted: m });
     }
   },
 
@@ -90,49 +77,65 @@ export default {
     try {
       if (!m.isGroup) return;
       const chatId = m.chat;
+      const sender = m.sender;
       const body = m.text || m.message?.conversation || "";
 
-      if (!global.antiLinkGroups?.[chatId]?.enabled) return;
-      const mode = global.antiLinkGroups[chatId].mode;
-      if (!mode) return; // Pas de mode choisi, ne rien faire
+      if (!global.antiSpamGroups?.[chatId]?.enabled) return;
+      const mode = global.antiSpamGroups[chatId].mode;
+      if (!mode) return;
 
-      const linkRegex = /(https?:\/\/[^\s]+|www\.[^\s]+|wa\.me\/[0-9]+|t\.me\/[^\s]+)/gi;
-      if (!linkRegex.test(body)) return;
+      if (!global.userSpam[chatId]) global.userSpam[chatId] = {};
+      if (!global.userSpam[chatId][sender]) global.userSpam[chatId][sender] = { lastMsg: "", count: 0, lastTime: Date.now() };
 
-      const sender = m.sender;
+      const user = global.userSpam[chatId][sender];
+      const now = Date.now();
 
-      // Ignore admins et owner
+      // Détection simple : message répété ou envoyé trop rapidement
+      const isRepeat = body === user.lastMsg;
+      const isFast = (now - user.lastTime) < 3000; // 3s entre messages
+
+      if (isRepeat || isFast || body.length > 500) { // message trop long = spam
+        user.count++;
+      } else {
+        user.count = 0;
+      }
+
+      user.lastMsg = body;
+      user.lastTime = now;
+
+      // Ignore admins/owner
       const check = await checkAdminOrOwner(kaya, chatId, sender);
       if (check.isAdminOrOwner) return;
 
-      // Supprime le message du lien
-      try { await kaya.sendMessage(chatId, { delete: m.key }); } catch {}
+      if (user.count >= 3) { // 3 infractions = action
+        // Reset compteur
+        user.count = 0;
 
-      if (mode === "kick") {
-        await kaya.groupParticipantsUpdate(chatId, [sender], "remove");
-        return kaya.sendMessage(chatId, { text: `👢 @${sender.split("@")[0]} expulsé pour lien interdit !`, mentions: [sender] });
-      }
-
-      if (mode === "warn") {
-        if (!global.userWarns[chatId]) global.userWarns[chatId] = {};
-        if (!global.userWarns[chatId][sender]) global.userWarns[chatId][sender] = 0;
-
-        global.userWarns[chatId][sender]++;
-        if (global.userWarns[chatId][sender] >= 4) {
-          delete global.userWarns[chatId][sender];
+        if (mode === "kick") {
           await kaya.groupParticipantsUpdate(chatId, [sender], "remove");
-          return kaya.sendMessage(chatId, { text: `🚫 @${sender.split("@")[0]} expulsé après 4 avertissements !`, mentions: [sender] });
+          return kaya.sendMessage(chatId, { text: `👢 @${sender.split("@")[0]} expulsé pour spam !`, mentions: [sender] });
         }
 
-        return kaya.sendMessage(chatId, { text: `⚠️ @${sender.split("@")[0]}, lien interdit ! (avertissement ${global.userWarns[chatId][sender]}/4)`, mentions: [sender] });
-      }
+        if (mode === "warn") {
+          if (!global.userWarns[chatId]) global.userWarns[chatId] = {};
+          global.userWarns[chatId][sender] = (global.userWarns[chatId][sender] || 0) + 1;
 
-      if (mode === "delete") {
-        return kaya.sendMessage(chatId, { text: `🗑️ Lien supprimé. @${sender.split("@")[0]}, évite d’envoyer des liens.`, mentions: [sender] });
+          if (global.userWarns[chatId][sender] >= 4) {
+            delete global.userWarns[chatId][sender];
+            await kaya.groupParticipantsUpdate(chatId, [sender], "remove");
+            return kaya.sendMessage(chatId, { text: `🚫 @${sender.split("@")[0]} expulsé après 4 avertissements !`, mentions: [sender] });
+          }
+
+          return kaya.sendMessage(chatId, { text: `⚠️ @${sender.split("@")[0]} spam détecté ! (avertissement ${global.userWarns[chatId][sender]}/4)`, mentions: [sender] });
+        }
+
+        if (mode === "delete") {
+          return kaya.sendMessage(chatId, { delete: m.key });
+        }
       }
 
     } catch (err) {
-      console.error("Erreur détecteur AntiLink :", err);
+      console.error("Erreur détecteur AntiSpam :", err);
     }
   },
 };

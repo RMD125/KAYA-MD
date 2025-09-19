@@ -1,7 +1,7 @@
 // ==================== commands/typing.js ====================
 import checkAdminOrOwner from '../utils/checkAdmin.js'; // ✅ export default → pas d’accolades
 import { saveBotModes } from '../utils/botModes.js';
-import { contextInfo } from '../utils/contextInfo.js'; // import centralisé
+import { contextInfo } from '../utils/contextInfo.js'; 
 
 export default {
   name: 'typing',
