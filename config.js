@@ -3,16 +3,17 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 
-// ESM __dirname
+// -------------------- ESM __dirname --------------------
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// -------------------- Configuration par défaut --------------------
 const defaultConfig = {
-  SESSION_ID: "",
-  OWNER_NUMBER: "",
+  SESSION_ID: "SESSION_ID",
+  OWNER_NUMBER: "243993621718",
   PREFIX: ".",
   TIMEZONE: "Africa/Kinshasa",
-  publicBot: true, // true = public, false = privé par défaut
+  publicBot: true,       // true = public, false = privé par défaut
   autoRead: true,
   restrict: false,
   botImage: "",
@@ -23,27 +24,28 @@ const defaultConfig = {
   }
 };
 
-// 📂 chemin vers ./data/config.json
+// -------------------- Chemin vers le fichier config.json --------------------
 const dataDir = path.join(__dirname, "data");
-if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
-
 const configPath = path.join(dataDir, "config.json");
 
-// Crée config.json si inexistant
+// Création du dossier /data si inexistant
+if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+
+// Création du fichier config.json avec les valeurs par défaut si inexistant
 if (!fs.existsSync(configPath)) {
   fs.writeFileSync(configPath, JSON.stringify(defaultConfig, null, 2));
   console.log("✅ config.json créé avec les paramètres par défaut dans /data");
 }
 
-// Charge config.json
+// -------------------- Chargement de la configuration --------------------
 let userConfig = JSON.parse(fs.readFileSync(configPath, "utf-8"));
 
-// Fonction pour sauvegarder après modification
+// -------------------- Fonction pour sauvegarder les modifications --------------------
 export function saveConfig(updatedConfig) {
   userConfig = { ...userConfig, ...updatedConfig };
   fs.writeFileSync(configPath, JSON.stringify(userConfig, null, 2));
   console.log("✅ Configuration sauvegardée avec succès.");
 }
 
-// Export de la config complète
+// -------------------- Export de la configuration complète --------------------
 export default userConfig;
