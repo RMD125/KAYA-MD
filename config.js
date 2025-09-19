@@ -9,7 +9,7 @@ const __dirname = path.dirname(__filename);
 
 // -------------------- Configuration par défaut --------------------
 const defaultConfig = {
-  SESSION_ID: "SESSION_ID",
+  SESSION_ID: "met ta session ici",
   OWNER_NUMBER: "243993621718",
   PREFIX: ".",
   TIMEZONE: "Africa/Kinshasa",
