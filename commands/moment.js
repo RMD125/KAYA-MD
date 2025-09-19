@@ -1,7 +1,6 @@
-// ================= commands/calendrier.js =================
 import moment from 'moment';
-import 'moment/locale/fr';
-import { contextInfo } from '../utils/contextInfo.js'; // import centralisé
+import 'moment/locale/fr.js'; 
+import { contextInfo } from '../utils/contextInfo.js';
 
 moment.locale('fr');
 
